@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# SessionEnd hook for cospowers plugin
+# Fires when session ends — instructs AI to load session-context skill for final checkpoint.
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+escape_for_json() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\n'/\\n}"
+    s="${s//$'\r'/\\r}"
+    s="${s//$'\t'/\\t}"
+    printf '%s' "$s"
+}
+
+msg='会话即将结束。你必须立即使用 Skill 工具调用 session-context skill（skill="session-context"），执行最终 checkpoint：更新 active-*.md 文件保存当前状态。如果任务已完成，向用户提议执行"沉淀"(sediment) 将经验写入 memory/。'
+
+escaped=$(escape_for_json "$msg")
+
+printf '{\n  "continue": true,\n  "systemMessage": "%s"\n}\n' "$escaped"
+
+exit 0

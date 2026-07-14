@@ -1,0 +1,76 @@
+# cospec Plugin
+
+适用于 Claude Code 及兼容 AI Agent 的 AI 原生产品规划工作流插件。以 `brainstorming` 为唯一入口，一条主链串联需求澄清、用户旅程设计与 TR1 需求说明书生成。
+
+## 工作流路由
+
+一条主链，按节点进入：
+
+```
+用户意图 ──→ brainstorming ──→ requirement-clarification ──→ user-journey-design ──→ tr1-requirements-spec
+```
+
+| 用户状态 | 进入节点 | 说明 |
+|---------|---------|------|
+| 原始想法、口头需求、"想全面" | → `requirement-clarification` | 从链头开始，走完整流程 |
+| 已有清晰需求方向，无旅程设计 | → `user-journey-design` | 跳过澄清，从旅程开始 |
+| 已有旅程文档 / 结构化需求 / 直出 TR1 | → `tr1-requirements-spec` | 跳过前两阶段，直出 TR1 |
+
+## 流水线阶段明细
+
+| # | 阶段 | 入口 | 核心产物 | 结束标识 |
+|---|------|------|----------|----------|
+| 1 | **需求澄清** | `requirement-clarification` | 需求背景澄清交付物（需求概述、全景结论、异常边界与风险、下游影响、事实/假设/待确认、3-5 条核心共识） | 用户确认澄清结果充分 |
+| 2 | **用户旅程设计** | `user-journey-design` | 用户旅程设计文档（需求背景、方案设计、未来旅程、目标达成分析） | 用户确认 Step 0/1/2/3 全部通过 |
+| 3 | **TR1 需求说明书** | `tr1-requirements-spec` | TR1 用户需求说明书（大需求评审版 + AI 上下文版 / 小需求评审版） | 用户确认文档内容 |
+
+## 安装
+
+### Claude Code 插件方式
+
+```bash
+# 添加插件市场
+/plugin marketplace add git@github.com:afutemp/cospec.git
+
+# 安装插件
+/plugin install cospec
+```
+
+### 手动安装
+
+将 `hooks/hooks.json` 中的 hook 配置合并到项目的 `.claude/settings.json`。
+
+## 配置
+
+所有配置项均为**可选**。推荐使用 `cospec-configure` skill 进行交互式配置，它会将结果写入插件根目录的 `cospec.config.json`。
+
+### `project.product`
+
+**用途**：产品标识符。
+
+**示例**（在 `cospec.config.json` 中）：
+```json
+"project": { "product": "SCP" }
+```
+
+## Skills 清单（9 个）
+
+| Skill | 职责 |
+|-------|------|
+| `using-spec-developer` | 入口点：指导如何使用 skill |
+| `session-context` | 跨 compact/重启的会话状态持久化 |
+| `brainstorming` | 中央路由器：评估规划阶段，分发至对应工作流 |
+| `product-planning-workflow` | 产品规划工作流编排器：串联需求澄清、用户旅程设计、TR1 生成与质量门 |
+| `requirement-clarification` | 需求澄清：原始想法 → "想全面"的澄清结果 |
+| `user-journey-design` | 用户旅程设计：4 阶段状态机确认流程 |
+| `tr1-requirements-spec` | TR1 用户需求说明书生成（大/小需求，评审版 + AI 上下文版） |
+| `cospec-configure` | 交互式配置：设置 project info 或替换内置模板路径 |
+| `writing-skills` | 编写/修改/验证 skill 的元 skill |
+
+## 扩展与接入
+
+需要调整工作流、新增 Skill 或集成自己的模板？请参考 [docs/INTEGRATION.md](docs/INTEGRATION.md)。
+
+## 许可证
+
+MIT

@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# SessionStart hook for cospowers plugin
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# # Always refresh kb-Product knowledge base to latest (non-blocking, stderr only)
+# KB_QUERY_TARGET="${HOME}/.claude/skills/kb-query"
+# if [ -d "${KB_QUERY_TARGET}" ]; then
+#   # Already exists: always attempt git pull, fall back to setup-deps on failure
+#   git -C "${KB_QUERY_TARGET}" pull --ff-only >/dev/null 2>/dev/null || \
+#     bash "${PLUGIN_ROOT}/scripts/setup-deps.sh" 2>/dev/null || true
+# else
+#   # Not installed: clone fresh
+#   bash "${PLUGIN_ROOT}/scripts/setup-deps.sh" 2>/dev/null || true
+# fi
+
+# Read using-spec-developer content and embed it directly
+using_content=$(cat "${PLUGIN_ROOT}/skills/using-spec-developer/SKILL.md" 2>&1 || echo "Error reading using-spec-developer skill")
+
+escape_for_json() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\n'/\\n}"
+    s="${s//$'\r'/\\r}"
+    s="${s//$'\t'/\\t}"
+    printf '%s' "$s"
+}
+
+escaped=$(escape_for_json "$using_content")
+session_context="<EXTREMELY_IMPORTANT>\nYou have cospowers.\n\n**Below is the full content of your 'cospowers:using-spec-developer' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\n\n${escaped}\n\n</EXTREMELY_IMPORTANT>"
+
+# session-context awareness
+active_files=""
+for candidate_dir in ".claude/session-context" ".codex/session-context" ".opencode/session-context" ".openclaw/session-context"; do
+  if [ -d "$candidate_dir" ]; then
+    found=$(ls "$candidate_dir"/active-*.md 2>/dev/null) || true
+    if [ -n "$found" ]; then
+      active_files="$found"
+      break
+    fi
+  fi
+done
+
+session_context_hint=""
+if [ -n "$active_files" ]; then
+  task_list=""
+  for f in $active_files; do
+    task_name=$(basename "$f" .md | sed 's/^active-//')
+    updated=$(head -5 "$f" | grep -o '[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}' | head -1) || true
+    task_list="${task_list}\\n  - ${task_name} (${updated})"
+  done
+  session_context_hint="\\n---\\n📋 **活跃任务上下文:**${task_list}\\n\\n<MANDATORY>你必须立刻使用 Skill 工具调用 session-context，执行完整盘点流程（枚举目录 → 读所有 active-*.md → 输出清单 → 决策恢复/新任务）后再响应用户。禁止在盘点完成前回复用户或执行任何其他操作。</MANDATORY>\\n---"
+fi
+
+memory_hint=""
+if [ -d "memory" ]; then
+  recent_mem=$(ls -t memory/*.md 2>/dev/null | head -2 | while read -r f; do
+    basename "$f" .md
+  done | tr '\n' ',' | sed 's/,$//') || true
+  if [ -n "$recent_mem" ]; then
+    memory_hint="\\n🧠 **项目经验索引:** ${recent_mem}\\n做相关决策时查阅 memory/ 对应文件。"
+  fi
+fi
+
+session_context="${session_context}${session_context_hint}${memory_hint}"
+
+# Output context injection as JSON
+if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
+  printf '{\n  "additional_context": "%s"\n}\n' "$session_context"
+elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -z "${COPILOT_CLI:-}" ]; then
+  printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$session_context"
+else
+  printf '{\n  "additionalContext": "%s"\n}\n' "$session_context"
+fi
+
+exit 0

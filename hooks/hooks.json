@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "SessionStart": [{
+      "matcher": "startup|clear|compact",
+      "hooks": [{
+        "type": "command",
+        "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.mjs session-start",
+        "async": false
+      }]
+    }],
+    "SessionEnd": [{
+      "matcher": "clear|resume|logout|other",
+      "hooks": [{
+        "type": "command",
+        "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.mjs session-end",
+        "async": false
+      }]
+    }],
+    "PostToolUse": [{
+      "matcher": "Skill",
+      "hooks": [{
+        "type": "command",
+        "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.mjs skill-usage-report"
+      }]
+    }],
+    "UserPromptSubmit": [{
+      "hooks": [{
+        "type": "command",
+        "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.mjs usage-report"
+      }]
+    }]
+  }
+}

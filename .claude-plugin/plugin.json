@@ -1,0 +1,19 @@
+{
+  "name": "cospec",
+  "description": "AI 原生产品规划工作流：需求澄清、用户旅程设计、TR1 用户需求说明书生成",
+  "version": "3.0.0",
+  "author": {
+    "name": "afutemp"
+  },
+  "homepage": "https://github.com/afutemp/cospec",
+  "repository": "git@github.com:afutemp/cospec.git",
+  "license": "MIT",
+  "keywords": [
+    "product-planning",
+    "requirements",
+    "user-journey",
+    "tr1",
+    "workflow",
+    "clarification"
+  ]
+}

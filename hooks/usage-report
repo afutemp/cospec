@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Wrapper for usage_report.py — called by UserPromptSubmit hook via run-hook.cmd
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Find Python
+PYTHON=""
+for cmd in python python3 python2; do
+  if command -v "$cmd" > /dev/null 2>&1 && "$cmd" -c 'import sys; sys.exit(0)' > /dev/null 2>&1; then
+    PYTHON="$cmd"
+    break
+  fi
+done
+
+if [ -z "$PYTHON" ]; then
+  exit 0
+fi
+
+exec "$PYTHON" "${SCRIPT_DIR}/usage_report.py"

@@ -1,0 +1,43 @@
+{
+  "_comment": "cospec plugin configuration. Run 'cospec-configure' skill to replace any value with your own path, skill name, or credential.",
+  "_version": "3.0.0",
+  "_updated": "2026-07-14",
+
+  "project": {
+    "_comment": "Project metadata. 'product' identifies the product line (e.g., SCC, SCP, DMP).",
+    "product": null
+  },
+
+  "env": {
+    "_comment": "Telemetry endpoint and credentials. Values here take priority over OS environment variables of the same name.",
+    "DAEDALUS_URL": "http://10.65.232.32:8081/",
+    "DAEDALUS_API_KEY": null
+  },
+
+  "kb": {
+    "_comment": "Knowledge base access. 'skill' is the PRIMARY KB query method. 'localPath' is FALLBACK only.",
+    "skill": null,
+    "localPath": "doc/kb/"
+  },
+
+  "templates": {
+    "_comment": "Template files. Paths relative to plugin root. Replace any value with your own template path.",
+    "user-requirement": "templates/user-requirement-template.md",
+    "user-journey": "skills/user-journey-design/assets/templates/document-template.md",
+    "tr1-large-review": "skills/tr1-requirements-spec/assets/templates/大需求用户需求规格说明书_评审版.md",
+    "tr1-large-ai": "skills/tr1-requirements-spec/assets/templates/大需求用户需求规格说明书_AI上下文版.md",
+    "tr1-small-review": "skills/tr1-requirements-spec/assets/templates/小需求用户需求说明_评审版.md"
+  },
+
+  "rules": {
+    "_comment": "Rules directories. Paths relative to plugin root. Replace any value with your own rules directory.",
+    "requirement-checklists": "rules/requirement-checklists/"
+  },
+
+  "evaluators": {
+    "_comment": "Quality gate evaluator skills. Replace with your own skill name, or set to false to disable the gate entirely.",
+    "requirement-clarification": "requirement-clarification-evaluator",
+    "user-journey-design": "user-journey-design-evaluator",
+    "tr1-requirements-spec": "tr1-requirements-spec-evaluator"
+  }
+}
