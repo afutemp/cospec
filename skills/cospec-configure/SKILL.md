@@ -1,6 +1,6 @@
 ---
 name: cospec-configure
-description: Use when configuring cospec for a new project — interactively guides replacement of templates, rules, evaluators, knowledge base, and project info by writing to cospec.config.json in the plugin root. Activated by "配置cospec", "configure cospec", "我有自己的模板", "替换规范", "用我自己的评估器", "设置项目信息".
+description: Use when configuring cospec for a new project — interactively guides replacement of templates, rules, evaluators, knowledge base, workflow defaults, and project info by writing to cospec.config.json in the plugin root.
 ---
 
 # cospec Configure
@@ -23,6 +23,7 @@ Interactive configuration wizard. Reads the current `cospec.config.json`, guides
 - Replacing built-in requirement checklists with team-specific rules
 - Replacing built-in quality gate evaluators with team-specific evaluators
 - Configuring knowledge base access or telemetry credentials
+- Setting the default workflow entry skill
 
 ---
 
@@ -53,13 +54,14 @@ After reading the config, output:
   evaluators (requirement-clarification, user-journey-design, tr1-requirements-spec)
   kb (localPath: doc/kb/)
   env (DAEDALUS_URL, DAEDALUS_API_KEY)
+  workflow (default: product-planning-workflow)
 
 要配置哪个类别？
   1. project      — 项目信息（产品名称）
   2. templates    — 模板文件
   3. rules        — 规范/检查清单目录
   4. evaluators   — 质量门评估器 skill
-  5. parallel     — DAG 并行文档生成（预留扩展点）
+  5. workflow     — 默认 workflow entry skill
   6. kb           — 知识库访问
   7. env          — 环境变量与凭证
   8. 全部配置
@@ -80,7 +82,7 @@ If the user selects **9. 还原默认配置**, execute the following:
 3. **If backup does not exist**: Output:
    ```
    ⚠️ 未找到 cospec.config.json.bak 备份文件。
-   尚未执行过配置操作，没有可还原的备份。请先通过选项 1-7 完成首次配置。
+   尚未执行过配置操作，没有可还原的备份。请先通过选项 1-8 完成首次配置。
    ```
 
 ---
@@ -143,29 +145,12 @@ Validation: string values must not be empty; `false` is valid; skip is valid.
 
 ---
 
-### `parallel` — DAG 并行文档生成（预留扩展点）
+### `workflow` — 默认 workflow entry skill
 
-These settings control the optional DAG-based parallel document generation mechanism. All existing stages remain linear by default.
+**default**
+> "默认的 workflow entry skill 是什么？输入 skill 名称，或跳过使用默认：`product-planning-workflow`。当 `brainstorming` 无法判断用户意图时会回退到该默认值。"
 
-**enabled**
-> "是否启用 DAG 并行文档生成总开关？输入 `true` 或 `false`，默认 `false`。当前仅作为预留机制，现有阶段默认不开启。"
-
-**max_parallel_tasks**
-> "单批最多并行调度多少个 section-writing 子 Agent？输入数字，默认 `4`。"
-
-**evaluator**
-> "DAG 计划执行前是否使用评估器？输入自定义 skill 名称，输入 `false` 禁用，或跳过使用默认：`cospec-dag-evaluator`。"
-
-**stages.requirement-clarification**
-> "是否为 `requirement-clarification` 阶段启用并行生成？输入 `true` 或 `false`，默认 `false`。（预留，当前不建议开启）"
-
-**stages.user-journey-design**
-> "是否为 `user-journey-design` 阶段启用并行生成？输入 `true` 或 `false`，默认 `false`。（预留，当前不建议开启）"
-
-**stages.tr1-requirements-spec**
-> "是否为 `tr1-requirements-spec` 阶段启用并行生成？输入 `true` 或 `false`，默认 `false`。（预留，当前不建议开启）"
-
-Validation: boolean values must be `true` or `false`; `evaluator` must be a non-empty string or `false`.
+Validation: non-empty string.
 
 ---
 
@@ -202,6 +187,7 @@ Before writing, display what will be changed:
   templates.user-requirement:   null → "my-templates/tr1.md"  ✅ 文件已验证
   rules.requirement-checklists: null → "my-rules/checklists/"  ✅ 目录已验证
   evaluators.tr1-requirements-spec: null → false  ⚠️ 将禁用 TR1 质量门控
+  workflow.default:             null → "product-planning-workflow"
 
 是否确认写入？(y/n)
 ```
@@ -236,10 +222,13 @@ After writing:
 | File path | Use `Read` tool to verify file exists and is non-empty |
 | Directory path | Use `Bash` to verify directory exists |
 | Evaluator name | Non-empty string or `false` |
+| Workflow default | Non-empty string |
 | `null` / skip | Always valid — resets to cospec default |
 
 ---
 
 ## Extension Principle
 
-`cospec.config.json` is the **only** supported extension mechanism. Core workflow skills (`brainstorming`, `requirement-clarification`, `user-journey-design`, `tr1-requirements-spec`) enforce their own SOP and cannot be overridden by other plugins or skills. Only the leaf extension points declared in this config (templates, rules, evaluators, kb, env) are replaceable.
+`cospec.config.json` is the **only** supported extension mechanism. Core workflow skills (`brainstorming`, `product-planning-workflow`, `tr1-only-workflow`) enforce their own SOP and cannot be overridden by other plugins or skills. Only the leaf extension points declared in this config (templates, rules, evaluators, kb, env, workflow default) are replaceable.
+
+Workflow topology itself is defined in the workflow entry skill prompts, not in config.

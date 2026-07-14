@@ -67,24 +67,23 @@
 "project": { "product": "SCP" }
 ```
 
-## Skills 清单（9 个核心 + 3 个 DAG 并行扩展）
+## Skills 清单
 
 | Skill | 职责 |
 |-------|------|
 | `using-spec-developer` | 入口点：指导如何使用 skill |
 | `session-context` | 跨 compact/重启的会话状态持久化 |
-| `brainstorming` | 中央路由器：评估规划阶段，分发至对应工作流 |
-| `product-planning-workflow` | 产品规划工作流编排器：串联需求澄清、用户旅程设计、TR1 生成与质量门 |
+| `brainstorming` | 中央路由器：评估规划阶段，选择 workflow entry skill |
+| `product-planning-workflow` | 默认工作流编排器：编排完整产品规划管线 |
+| `tr1-only-workflow` | 直出 TR1 工作流编排器 |
 | `requirement-clarification` | 需求澄清：原始想法 → "想全面"的澄清结果 |
 | `user-journey-design` | 用户旅程设计：4 阶段状态机确认流程 |
 | `tr1-requirements-spec` | TR1 用户需求说明书生成（大/小需求，评审版 + AI 上下文版） |
-| `cospec-configure` | 交互式配置：设置 project info 或替换内置模板路径 |
+| `cospec-configure` | 交互式配置：设置 project info、模板、默认 workflow 等 |
 | `writing-skills` | 编写/修改/验证 skill 的元 skill |
-| `cospec-dag-planner` | DAG 并行文档生成：拆分目标文档为可并行 section 任务 |
-| `cospec-dag-executor` | DAG 并行文档生成：按 ready-set 调度子 Agent 并合并最终文档 |
-| `cospec-dag-evaluator` | DAG 计划质量评估：检查无环性、结构、占位符、一致性 |
-
-> `cospec-dag-*` skills 是预留扩展机制，现有三阶段默认保持线性。需要在 `cospec.config.json` 中显式开启 `parallel.stages.<stage>` 才会启用。
+| `cospec-dag-planner` | DAG 计划生成：为 workflow entry skill 生成 `dag.json` 和 task cards |
+| `cospec-dag-executor` | DAG 执行器：按 ready-set 并行调度 `skill-invoker` SubAgents |
+| `cospec-dag-evaluator` | DAG 计划评估：检查 DAG 无环性、skill 引用、占位符等 |
 
 ## 扩展与接入
 

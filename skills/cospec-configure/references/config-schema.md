@@ -72,19 +72,14 @@ Replace or disable individual quality gate evaluator skills.
 - **`false`** — disable this gate entirely.
 - **`null`** — use cospec default.
 
-## `parallel`
-
-Reserved extension point for DAG-based parallel document generation. Existing stages remain linear by default.
+## `workflow`
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `enabled` | boolean | `false` | Master switch for parallel document generation. |
-| `max_parallel_tasks` | number | `4` | Maximum tasks dispatched in one ready-set batch. |
-| `evaluator` | string \| `false` | `"cospec-dag-evaluator"` | Skill name used to evaluate DAG plans before execution. Set to `false` to disable. |
-| `stages.requirement-clarification` | boolean | `false` | Reserved: enable parallel mode for the requirement-clarification stage. |
-| `stages.user-journey-design` | boolean | `false` | Reserved: enable parallel mode for the user-journey-design stage. |
-| `stages.tr1-requirements-spec` | boolean | `false` | Reserved: enable parallel mode for the tr1-requirements-spec stage. |
+| `default` | string | `"product-planning-workflow"` | Default workflow entry skill used by `brainstorming` when it cannot determine a more specific workflow. |
+
+Workflow topology itself is defined in the workflow entry skill prompts (`product-planning-workflow`, `tr1-only-workflow`, etc.), not in config.
 
 ## Extension Principle
 
-`cospec.config.json` is the **only** supported extension mechanism. Core workflow skills (`brainstorming`, `requirement-clarification`, `user-journey-design`, `tr1-requirements-spec`) enforce their own SOP and cannot be overridden by other plugins. Only the leaf extension points declared in this config (templates, rules, evaluators, kb, env) are replaceable.
+`cospec.config.json` is the **only** supported extension mechanism. Core workflow skills (`brainstorming`, `product-planning-workflow`, `tr1-only-workflow`) enforce their own SOP and cannot be overridden by other plugins. Only the leaf extension points declared in this config (templates, rules, evaluators, kb, env, workflow default) are replaceable.

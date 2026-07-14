@@ -4,45 +4,38 @@
 
 ## 职责
 
-读取 `cospec-dag-planner` 生成的 `dag.json`，以 orchestrator-only 主 Agent 的方式调度文档片段撰写子 Agent，执行 ready-set 并行调度，最后合并成完整文档。
+读取 skill 级 DAG 计划（`.cospec/workflow/dag.json`），以 orchestrator-only 主 Agent 的方式调度 `skill-invoker` SubAgent，执行 ready set 中的 skill，并处理 `NEEDS_CONTEXT` 错峰提问。
 
 ## 输入
 
-Plan 目录路径，例如 `.cospec/plans/YY-MM-DD-<project>/`。
+Workflow 目录路径，例如 `.cospec/workflow/`。
 
 ## 输出
 
 ```text
-.cospec/
+.cospec/workflow/
   execution/
     run-state.json
     time-stats.log
-  tasks/
-    <task-id>/
-      manifest.json
-      results.md
-      contract.json
-      changed-files.txt
-      review-quality.md
-  outputs/
-    <stage>/
-      <document-name>.md
+  <task-id>/
+    manifest.json
+    results.md
 ```
 
-## 调度规则
+## 核心规则
 
-- 任务就绪条件：所有 `depends_on` 的 manifest 状态为 `DONE` 且 `ready_for_downstream=true`。
-- 同一 ready set 中的独立任务可并行调度。
-- 每批数量不超过 `cospec.config.json` 中的 `parallel.max_parallel_tasks`。
-- 每个完成的任务必须经过 `document-reviewer` 门控。
-- 所有任务完成后由 `document-assembler` 合并。
+- 任务就绪：所有依赖 manifest 为 `DONE` 且 `ready_for_downstream=true`。
+- 同一 ready set 中的独立任务可并行 dispatch。
+- SubAgent 不能直接问用户，需返回 `NEEDS_CONTEXT`。
+- 主 Agent 维护 question queue，一次只问一个。
+- 回答后，把答案路由回对应 SubAgent。
 
 ## 状态
 
-`DONE`、`DONE_WITH_CONCERNS`、`NEEDS_CONTEXT`、`BLOCKED`、`FAILED`。
+`RUNNING`、`NEEDS_CONTEXT`、`DONE`、`FAILED`、`BLOCKED`。
 
 ## 注意
 
-- 主 Agent 不直接写文档片段。
-- 不向子 Agent 粘贴大段正文，只传 artifact paths。
+- 主 Agent 不直接执行 leaf skill。
+- 不向 SubAgent 粘贴大段正文，只传 artifact paths。
 - 必须记录 `T_EXEC_START` 和 `T_FIRST_COMPLETE`。

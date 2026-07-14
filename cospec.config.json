@@ -41,15 +41,8 @@
     "tr1-requirements-spec": "tr1-requirements-spec-evaluator"
   },
 
-  "parallel": {
-    "_comment": "DAG-based parallel document generation. Reserved extension point; existing stages remain linear by default.",
-    "enabled": false,
-    "max_parallel_tasks": 4,
-    "evaluator": "cospec-dag-evaluator",
-    "stages": {
-      "requirement-clarification": false,
-      "user-journey-design": false,
-      "tr1-requirements-spec": false
-    }
+  "workflow": {
+    "_comment": "Default workflow entry skill used by brainstorming when no more specific workflow is selected.",
+    "default": "product-planning-workflow"
   }
 }

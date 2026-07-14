@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "You MUST use this before any product planning work - clarifying requirements, designing user journeys, or writing TR1 spec documents. Explores user intent, assesses the planning stage, and routes to the product-planning-workflow orchestrator."
+description: "You MUST use this before any product planning work - clarifying requirements, designing user journeys, or writing TR1 spec documents. Explores user intent, assesses the planning stage, selects the appropriate workflow entry skill, and dispatches it."
 ---
 
 # Brainstorming —— 中央路由器
@@ -11,10 +11,10 @@ description: "You MUST use this before any product planning work - clarifying re
 
 brainstorming 是所有产品规划工作的唯一入口，承担单一职责：
 
-- **路由器**：对所有产品规划任务，先理解上下文、追问想法、判断用户处于产品规划的哪个阶段，然后分发到 `product-planning-workflow` 执行完整管线。
+- **路由器**：对所有产品规划任务，先理解上下文、追问想法、判断用户处于产品规划的哪个阶段以及需要哪个 workflow，然后分发到对应的 workflow entry skill。
 
 <HARD-GATE>
-在完成 Phase 1（共享发现）、判断规划阶段、向用户确认路由、并调用 `product-planning-workflow` 之前，禁止调用任何下游叶子 skill 或产出任何正式文档。适用于所有产品规划任务，无论看起来多简单。
+在完成 Phase 1（共享发现）、判断规划阶段与 workflow、向用户确认路由、并调用 workflow entry skill 之前，禁止调用任何下游叶子 skill 或产出任何正式文档。适用于所有产品规划任务，无论看起来多简单。
 </HARD-GATE>
 
 ## 反模式：跳过路由直接产出
@@ -30,81 +30,67 @@ brainstorming 是所有产品规划工作的唯一入口，承担单一职责：
 1. **恢复会话上下文（如适用）** —— 如果 session-context 目录中存在 `active-*.md` 文件，必须先调用 `session-context` skill 完成盘点，决定是恢复已有任务还是开始新任务。只有盘点完成后方可进入步骤 2。
 2. **探索项目上下文** —— 检查已有材料：用户需求文档、PRD 草稿、用户旅程文档、DCP2-1 材料、竞品分析报告、客户反馈报告。
 3. **追问想法** —— 对产品需求的每个关键方面进行深入追问。对于每个问题，**先给出你的推荐答案**，然后等待反馈再继续。应用追问技巧（见下方"追问技巧"章节）。
-4. **判断规划阶段** —— 确定用户当前处于产品规划的哪个阶段，然后进入 Phase 2 路由分发。
+4. **判断规划阶段与 workflow** —— 确定用户当前处于产品规划的哪个阶段、需要哪种 workflow，然后进入 Phase 2 路由分发。
 
 ---
 
 ## 二、Phase 2：路由分发
 
-根据用户的输入特征和已有材料，判断从主链的哪个节点进入。**必须先向用户确认再执行路由。禁止不经确认直接分发：**
+根据用户的输入特征和已有材料，判断应该进入哪个 workflow entry skill。**必须先向用户确认再执行。禁止不经确认直接分发：**
 
-| 用户输入特征 | 推荐进入阶段 | 说明 |
-|-------------|-------------|------|
-| 原始想法、口头需求、需求不清晰、"想全面" | `requirement-clarification` | 从链头开始，走完整流程 |
-| 已有清晰需求方向，但未做旅程设计 | `user-journey-design` | 跳过澄清，从旅程开始 |
-| 已有用户旅程文档 / 结构化需求文档 / 直接要写 TR1 | `tr1-requirements-spec` | 跳过前两阶段，直出 TR1 |
+| 用户输入特征 | 推荐 Workflow Entry Skill | 说明 |
+|-------------|--------------------------|------|
+| 原始想法、口头需求、需求不清晰、"想全面" | `product-planning-workflow` | 完整流程 |
+| 已有清晰需求方向，但未做旅程设计 | `product-planning-workflow` | 完整流程 |
+| 已有用户旅程文档 / 结构化需求文档 / 直接要写 TR1 | `tr1-only-workflow` | 直出 TR1 |
+| 无法判断 | `product-planning-workflow` | 默认完整流程 |
+
+> 未来可增加 `product-planning-with-competitor-workflow` 等 workflow entry skill；届时在路由表中补充对应条目。
 
 **路由判断依据**：
-1. 用户意图关键词：澄清相关（"想全面""帮我理清""这个需求靠谱吗"）→ 从 clarification 进入；旅程相关（"用户旅程""操作流程""客户怎么用"）→ 从 journey 进入；文档生成相关（"写 TR1""生成需求说明书"）→ 从 TR1 进入。
-2. 已有材料：口头需求、会议记录 → 从 clarification 开始；已有用户旅程文档或 PRD 草稿 → 从 journey 或 TR1 进入。
+1. 用户意图关键词：澄清相关（"想全面""帮我理清""这个需求靠谱吗"）→ `product-planning-workflow`；文档生成相关（"写 TR1""生成需求说明书"）→ `tr1-only-workflow`。
+2. 已有材料：口头需求、会议记录 → `product-planning-workflow`；已有用户旅程文档或 PRD 草稿 → `tr1-only-workflow`。
 3. 目标产物：用户想要输出什么？（需求澄清稿 / 用户旅程文档 / TR1 需求说明书）
 
 **向用户确认路由**：
 
-1. 向用户说明你的阶段判断和推荐的起始阶段。
-2. 确认用户认可后，调用 `product-planning-workflow`。
-3. 调用 `product-planning-workflow` 后，**brainstorming 结束**。`product-planning-workflow` 会按业务流程继续推进（clarification → journey → TR1），并在阶段间调度 evaluator 质量门。
+1. 向用户说明你的阶段判断和推荐的 workflow entry skill。
+2. 确认用户认可后，调用选中的 workflow entry skill。
+3. 调用后，**brainstorming 结束**。被调用的 workflow entry skill 会按业务流程继续推进。
 
 ---
 
-## 流程全景
+## 三、流程全景
 
-```
+```text
 用户意图
     │
     ▼
 brainstorming（Phase 1：共享发现）
     │
     ▼
-product-planning-workflow
+选择 workflow entry skill
     │
-    ├─ 原始想法 / "想全面" ──→ requirement-clarification
-    │                              │
-    │                              ▼
-    │                        [evaluator]
-    │                              │
-    │                              ▼
-    │                        user-journey-design
-    │                              │
-    │                              ▼
-    │                        [evaluator]
-    │                              │
-    │                              ▼
-    │                        tr1-requirements-spec
-    │                              │
-    │                              ▼
-    │                        [evaluator]
+    ├─ 完整产品规划 ──→ product-planning-workflow
+    │                       │
+    │                       ▼
+    │               cospec-dag-executor
+    │                       │
+    │                       ▼
+    │       requirement-clarification → user-journey-design → tr1-requirements-spec
     │
-    ├─ 已有清晰需求 ──→ user-journey-design
-    │                        │
-    │                        ▼
-    │                  [evaluator]
-    │                        │
-    │                        ▼
-    │                  tr1-requirements-spec
-    │                        │
-    │                        ▼
-    │                  [evaluator]
-    │
-    └─ 已有旅程文档 / 直出 TR1 ──→ tr1-requirements-spec
-                                      │
-                                      ▼
-                                [evaluator]
+    └─ 直出 TR1 ─────→ tr1-only-workflow
+                            │
+                            ▼
+                    cospec-dag-executor
+                            │
+                            ▼
+                    tr1-requirements-spec
 ```
 
 ---
 
-## 追问技巧
+## 四、追问技巧
 
 三种技巧在步骤 3 中全程应用。它们不是顺序阶段——根据每个问题的特性选用合适的技巧。
 

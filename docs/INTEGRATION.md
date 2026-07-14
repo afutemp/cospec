@@ -9,22 +9,34 @@
 cospec 是一个基于 **Skill** 的 AI 工作流插件：
 
 - **Skill**：放在 `skills/<skill-name>/SKILL.md` 的 Markdown 文件，前端带 YAML frontmatter，描述 AI Agent 的触发条件、行为契约和输出格式。
-- **主链（Pipeline）**：产品规划的标准流程，由 `brainstorming` 路由给 `product-planning-workflow` 统一编排：
+- **主链（Pipeline）**：产品规划的标准流程，由 `brainstorming` 路由到合适的 workflow entry skill，再由 workflow entry skill 编排 leaf skills：
 
 ```
 brainstorming
     │
-    ▼
-product-planning-workflow
-    ├── requirement-clarification
-    ├── [evaluator]
-    ├── user-journey-design
-    ├── [evaluator]
-    ├── tr1-requirements-spec
-    └── [evaluator]
+    ├─→ product-planning-workflow
+    │       │
+    │       ▼
+    │   cospec-dag-executor
+    │       │
+    │       ▼
+    │   requirement-clarification
+    │   user-journey-design
+    │   tr1-requirements-spec
+    │
+    └─→ tr1-only-workflow
+            │
+            ▼
+        cospec-dag-executor
+            │
+            ▼
+        tr1-requirements-spec
 ```
 
-- **元 Skill**：`using-spec-developer`、`session-context`、`cospec-configure`、`writing-skills` 不参与主链业务，分别负责入口引导、会话持久化、配置向导和 skill 开发方法论。
+- **Workflow Entry Skill**：编排一组 leaf skills 的入口 skill，例如 `product-planning-workflow`、`tr1-only-workflow`。它生成 DAG 产物并调用 `cospec-dag-executor`。
+- **Leaf Skill**：实际执行业务步骤的 skill，例如 `requirement-clarification`、`user-journey-design`、`tr1-requirements-spec`。
+- **共享 DAG 基础设施**：`cospec-dag-planner`、`cospec-dag-executor`、`cospec-dag-evaluator` 被 workflow entry skills 调用。
+- **元 Skill**：`using-spec-developer`、`session-context`、`cospec-configure`、`writing-skills` 不参与主链业务。
 
 ---
 
@@ -96,66 +108,55 @@ cospec 在每个 workflow 阶段后预留了 evaluator 配置位：
 - 若为字符串，调用对应 skill 名称进行评审，返回等级（如 A/B/C/D/F）和问题列表；
 - 评审不通过（如低于 B）则返工，通过才允许进入下一阶段。
 
-### 2.4 DAG 并行文档生成（预留扩展点）
+### 2.4 Skill 级 DAG 编排
 
-cospec 提供了一套可选的 DAG 并行文档生成机制，用于未来把单个 stage 的文档拆成多个 section 并行生成：
+cospec 的 workflow entry skills 使用一套共享的 DAG 基础设施来编排 leaf skills。
 
 ```
 product-planning-workflow
         │
         ▼
-cospec-dag-planner          # 拆分文档为 DAG + task cards
+cospec-dag-planner          # 可选：生成 .cospec/workflow/dag.json + task cards
         │
         ▼
 [cospec-dag-evaluator]      # 可选：评估 DAG 计划质量
         │
         ▼
-cospec-dag-executor         # 并行调度 section writers 并合并
+cospec-dag-executor         # 并行调度 skill-invoker SubAgents
         │
         ▼
-[existing stage evaluator]
+skill-invoker SubAgent ──→ requirement-clarification
+skill-invoker SubAgent ──→ user-journey-design
+skill-invoker SubAgent ──→ tr1-requirements-spec
 ```
 
 相关 skill：
 
-- `cospec-dag-planner`
-- `cospec-dag-executor`
-- `cospec-dag-evaluator`
+- `cospec-dag-planner`：生成 skill 级 DAG 产物。
+- `cospec-dag-executor`：按 ready set 并行调度 `skill-invoker` SubAgents。
+- `cospec-dag-evaluator`：评估 DAG 合法性。
 
-配置项在 `cospec.config.json` 的 `parallel` 字段：
+DAG 产物存放在 `.cospec/workflow/`：
 
-```json
-{
-  "parallel": {
-    "enabled": false,
-    "max_parallel_tasks": 4,
-    "evaluator": "cospec-dag-evaluator",
-    "stages": {
-      "requirement-clarification": false,
-      "user-journey-design": false,
-      "tr1-requirements-spec": false
-    }
-  }
-}
+```text
+.cospec/workflow/
+  dag.json
+  index.md
+  tasks/<task-id>.md
+  <task-id>/
+    manifest.json
+    results.md
+  execution/
+    run-state.json
+    time-stats.log
 ```
 
-- `enabled`：总开关。
-- `max_parallel_tasks`：单批最多并行任务数。
-- `evaluator`：DAG 计划评估器 skill 名称，或 `false` 禁用。
-- `stages.<stage-name>`：为特定 stage 启用并行模式（当前全部默认 `false`）。
+特点：
 
-后续接入方式：
-
-1. 确认目标 stage 适合拆分为独立 section（如 TR1 大需求评审版按章节拆分）。
-2. 将该 stage 的 `parallel.stages.<stage-name>` 设为 `true`。
-3. 在 `product-planning-workflow` 中，当该 stage 启用并行模式时，调用 `cospec-dag-planner` → 可选 `cospec-dag-evaluator` → `cospec-dag-executor`。
-4. DAG 产物存放在 `.cospec/plans/YY-MM-DD-<project>/`，运行时产物存放在 `.cospec/tasks/<task-id>/`。
-
-注意：
-
-- 现有三阶段默认保持线性，不启用并行模式。
-- 新增自定义子 skill 也可以直接调用 `cospec-dag-planner` + `cospec-dag-executor`。
-- `.cospec/` 目录为运行时产物，已加入 `.gitignore`。
+- Skill 之间的依赖关系写在 workflow entry skill 的 prompt 中，不由 `cospec.config.json` 配置节点关系。
+- 所有 leaf skill 通过 `skill-invoker` SubAgent 调用。
+- SubAgent 不能直接问用户；需要用户输入时返回 `NEEDS_CONTEXT`，由主 Agent 统一收集问题并错峰提问。
+- 当前默认 workflow 为线性 DAG。未来可在 workflow entry skill 中增加并行辅助 skill 节点。
 
 ### 2.5 修改某个 Skill 的行为
 
@@ -170,46 +171,47 @@ cospec-dag-executor         # 并行调度 section writers 并合并
    - Red Flags/反模式：禁止行为。
 3. 小步修改，使用 `writing-skills` 中的测试方法验证（见第 5 节）。
 
-### 2.5 调整路由规则
+### 2.6 调整路由规则
 
-`brainstorming` 是所有产品规划任务的唯一入口，但只有一个出口：`product-planning-workflow`。要调整阶段判断逻辑：
+`brainstorming` 是所有产品规划任务的唯一入口，它选择 workflow entry skill 并调用之。要调整入口判断逻辑：
 
 1. 编辑 `skills/brainstorming/SKILL.md` 中 **Phase 2：路由分发** 的表格。
-2. 修改推荐进入阶段（`requirement-clarification` / `user-journey-design` / `tr1-requirements-spec`）。
-3. 实际阶段编排和流转逻辑在 `skills/product-planning-workflow/SKILL.md` 中维护。
+2. 修改推荐的 workflow entry skill（`product-planning-workflow` / `tr1-only-workflow` / 未来新增的 workflow）。
+3. 实际阶段编排和流转逻辑在对应的 workflow entry skill（如 `skills/product-planning-workflow/SKILL.md`）中维护。
 
-### 2.6 新增 `brainstorming` 出口（新增独立工作流）
+### 2.7 新增 `brainstorming` 出口（新增独立工作流）
 
-`brainstorming` 当前只有一个出口 `product-planning-workflow`，但设计上支持多个 workflow skill 出口。当你需要增加与产品规划无关的独立工作流时（例如竞品分析、客户反馈分析），应该新建一个 workflow skill 并让 `brainstorming` 路由到它，而不是把逻辑塞进 `product-planning-workflow`。
+`brainstorming` 当前默认出口为 `product-planning-workflow`，也支持 `tr1-only-workflow`。当你需要增加其它产品规划相关的工作流时，应该新建一个 workflow entry skill 并让 `brainstorming` 路由到它，而不是把逻辑塞进 `product-planning-workflow`。
 
 示例：新增竞品分析工作流
 
-1. 新建 workflow skill：`skills/competitor-analysis-workflow/SKILL.md`
-2. 在该 skill 内部编排 `competitor-analysis` 等子 skill
+1. 新建 workflow entry skill：`skills/product-planning-with-competitor-workflow/SKILL.md`
+2. 在该 skill 内部编排 `requirement-clarification`、`competitor-analysis`、`user-journey-design`、`tr1-requirements-spec` 等子 skill
 3. 编辑 `skills/brainstorming/SKILL.md` 的 Phase 2 路由表：
 
 ```markdown
 | 用户输入特征 | 推荐工作流 | 说明 |
 |-------------|-----------|------|
 | 产品规划相关 | → `product-planning-workflow` | 需求澄清/旅程/TR1 主链 |
-| 要做竞品分析 | → `competitor-analysis-workflow` | 独立竞品分析管线 |
+| 要做竞品分析 | → `product-planning-with-competitor-workflow` | 带竞品分析的管线 |
+| 直接写 TR1 | → `tr1-only-workflow` | 直出 TR1 |
 ```
 
 4. 更新 `README.md`、`CLAUDE.md` 的架构图和 Skill 清单
 
-**原则**：`brainstorming` 判断任务类型，workflow skill 编排子 skill。不要把非产品规划的阶段硬塞进 `product-planning-workflow`。
+**原则**：`brainstorming` 判断任务类型并选择 workflow entry skill，workflow entry skill 编排子 skill。不要把不同 workflow 的阶段硬塞进 `product-planning-workflow`。
 
 ---
 
 ## 3. 新增工作流
 
-### 3.1 在 `product-planning-workflow` 中插入新阶段
+### 3.1 修改现有 Workflow Entry Skill
 
-当前 `brainstorming` 只有一个出口：`product-planning-workflow`。所有产品规划相关的新阶段都应该在这个工作流 skill 内部编排，而不是直接接入 `brainstorming`。
+当前 `brainstorming` 默认出口为 `product-planning-workflow`。所有产品规划相关的新阶段都应该在对应的 workflow entry skill 内部编排，而不是直接接入 `brainstorming`。
 
-假设要在 `requirement-clarification` 和 `user-journey-design` 之间新增一个 `competitor-analysis` 阶段：
+假设要在 `product-planning-workflow` 的 `requirement-clarification` 和 `user-journey-design` 之间新增一个 `competitor-analysis` 节点：
 
-1. **创建叶子 Skill 目录**：
+1. **创建 Leaf Skill 目录**：
 
 ```
 skills/competitor-analysis/
@@ -247,11 +249,29 @@ description: Use when the user needs to analyze competitors before designing the
 ```
 
 3. **接入 `product-planning-workflow`**：
-   编辑 `skills/product-planning-workflow/SKILL.md` 的 Pipeline 和 Stage Transitions 章节，在 `requirement-clarification` 之后、`user-journey-design` 之前插入 `competitor-analysis` 阶段。
+   编辑 `skills/product-planning-workflow/SKILL.md`，在 DAG 描述中将 `competitor-analysis` 作为独立节点加入，并声明其依赖关系。然后生成对应的 task card 模板。
 
-4. **更新文档**：在 `README.md` 和 `CLAUDE.md` 的 Skill 清单和流程图中补充新阶段。
+4. **更新文档**：在 `README.md` 和 `CLAUDE.md` 的 Skill 清单和流程图中补充新节点。
 
-### 3.2 新增独立工作流（非产品规划主链）
+### 3.2 新增 Workflow Entry Skill
+
+如果要新增一个完整 workflow（例如 `product-planning-with-competitor-workflow`）：
+
+1. 新建 workflow entry skill 目录：
+
+```
+skills/product-planning-with-competitor-workflow/
+├── SKILL.md
+└── README.zh.md
+```
+
+2. 在 `SKILL.md` 中声明本 workflow 的 DAG、task cards、以及调用 `cospec-dag-executor` 的步骤。
+
+3. 在 `skills/brainstorming/SKILL.md` 路由表中增加该 workflow 的触发条件。
+
+4. 更新 `README.md`、`CLAUDE.md`、`docs/INTEGRATION.md`。
+
+### 3.3 新增独立工作流（非产品规划主链）
 
 如果是与产品规划无关的独立能力（例如代码评审、测试用例生成）：
 
@@ -260,15 +280,17 @@ description: Use when the user needs to analyze competitors before designing the
 3. 用户通过直接调用 skill 名称使用，例如 `/skill code-review`。
 4. 如果需要在会话启动时自动引导，参考 `using-spec-developer` 的模式。
 
-### 3.3 新增配置项
+### 3.4 新增配置项
 
 如果新 skill 需要可配置项：
 
-1. 在 `cospec.config.json` 中添加新的顶层或嵌套字段（推荐放在 `templates`、`rules`、`evaluators`、`kb` 或 `env` 下）。
+1. 在 `cospec.config.json` 中添加新的顶层或嵌套字段（推荐放在 `templates`、`rules`、`evaluators`、`kb`、`env` 或 `workflow` 下）。
 2. 在 `skills/cospec-configure/references/config-schema.md` 中补充 schema 说明。
 3. 在 `skills/cospec-configure/SKILL.md` 中增加交互式配置步骤。
 4. 在 skill 的 `SKILL.md` 中增加 **Extension Points** 章节，声明读取哪些 config 字段。
 5. 在 skill 内部使用 `Read` 工具读取 `cospec.config.json` 获取配置。
+
+> 注意：workflow 拓扑本身定义在 workflow entry skill 的 prompt 中，不由 `cospec.config.json` 配置节点关系。`cospec.config.json` 中只保留 `workflow.default` 等轻量入口配置。
 
 ---
 
@@ -361,7 +383,8 @@ See `templates/user-requirement-template.md` for the default TR1 template.
 - [ ] `name` 与目录名一致，仅使用小写和连字符
 - [ ] 如需替换模板、规则或 evaluator，更新 `cospec.config.json`
 - [ ] 在 workflow skill 的 `SKILL.md` 中声明 Extension Points
-- [ ] 如需接入主链，更新 `skills/product-planning-workflow/SKILL.md` 的 Pipeline 和 Stage Transitions
+- [ ] 如需修改现有 workflow，更新对应的 workflow entry skill
+- [ ] 如需新增 workflow，新建 workflow entry skill 并在 `brainstorming` 路由表中注册
 - [ ] 如需调整入口判断，更新 `skills/brainstorming/SKILL.md` 路由表
 - [ ] 更新 `README.md` 和 `CLAUDE.md` 的 Skill 清单与流程图
 - [ ] 使用 `writing-skills` 方法做行为测试

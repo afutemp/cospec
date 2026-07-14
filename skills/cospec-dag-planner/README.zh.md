@@ -4,37 +4,25 @@
 
 ## 职责
 
-将一次产品规划文档生成任务拆分为可并行执行的文档片段（section/chapter/ID cluster），生成 cospowers 风格的调度产物：
+把 workflow entry skill 定义的 leaf skill 节点和依赖关系，转换成 `cospec-dag-executor` 可执行的调度产物：
 
 ```text
-.cospec/plans/YY-MM-DD-<project>/
+.cospec/workflow/
   index.md
   dag.json
   tasks/<task-id>.md
 ```
 
-## 何时使用
-
-- 当前 stage 或子 skill 被配置为并行生成模式。
-- 未来新增的 cospec 子 skill 需要把文档拆成多个部分并行产出。
-
 ## 输入
 
-调用方提供：stage、output_template_path、input_artifacts、output_path、可选 decomposition_hint。
+workflow 名称、节点定义（task id → skill / depends_on / description）。
 
 ## 输出
 
-人类可读的总计划、机器可读的 DAG、每个子 Agent 的 task card。
-
-## 拆分维度
-
-- by-chapter：按模板章节拆分。
-- by-id-cluster：按 AI 上下文版的 ID 簇拆分。
-- by-playbook：按用户旅程的 playbook 拆分。
-- by-aspect：按需求澄清的方面拆分。
+人类可读的 workflow 总览、机器可读的 DAG、每个 skill-invoker 的 task card。
 
 ## 注意
 
-- 本 skill 不直接执行，只负责生成计划产物。
-- 必须包含最终的 assemble 任务。
-- 产物中禁止出现 TBD/TODO 等占位符。
+- 本 skill 不直接执行，只生成计划产物。
+- 必须保证 DAG 无环。
+- 产物中禁止占位符。
