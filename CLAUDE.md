@@ -24,7 +24,7 @@ Before you make changes to this repo, you MUST:
 | `brainstorming` | ALL product planning work — central router |
 | `product-planning-workflow` | Dispatched by `brainstorming` to orchestrate the pipeline |
 
-### Pipeline（一条主链）
+### Pipeline（一条主链 + DAG 并行扩展预留）
 
 `brainstorming` 是所有产品规划工作的唯一入口，判断用户所处阶段后路由到对应节点：
 
@@ -40,6 +40,26 @@ brainstorming 内部按用户输入判断从哪个节点进入：
 | 已有清晰需求方向，但未做旅程设计 | → `user-journey-design` |
 | 已有用户旅程文档 / 结构化需求文档 / 直接要写 TR1 | → `tr1-requirements-spec` |
 
+当未来某个 stage 配置为并行生成模式（`config.parallel.enabled=true` 且 `config.parallel.stages["<stage-name>"]=true`）时，`product-planning-workflow` 可通过以下 DAG 路径执行该 stage：
+
+```
+product-planning-workflow
+        │
+        ▼
+cospec-dag-planner
+        │
+        ▼
+[cospec-dag-evaluator]  (optional)
+        │
+        ▼
+cospec-dag-executor
+        │
+        ▼
+[existing stage evaluator]
+```
+
+当前所有现有 stage 默认不启用并行模式。
+
 ### 管线阶段明细
 
 | # | 阶段 | Skill | 核心产物 |
@@ -48,7 +68,7 @@ brainstorming 内部按用户输入判断从哪个节点进入：
 | 2 | **用户旅程设计** | `user-journey-design` | 用户旅程设计文档（需求背景、方案设计、未来旅程、目标达成分析） |
 | 3 | **TR1 需求说明书** | `tr1-requirements-spec` | TR1 用户需求说明书（大需求评审版 + AI 上下文版 / 小需求评审版） |
 
-### Skill List（9 个）
+### Skill List（9 个核心 + 3 个 DAG 并行扩展）
 
 | Skill | 角色 |
 |-------|------|
@@ -61,6 +81,11 @@ brainstorming 内部按用户输入判断从哪个节点进入：
 | `tr1-requirements-spec` | TR1 用户需求说明书生成（大/小需求，评审版 + AI 上下文版） |
 | `cospec-configure` | 交互式配置：设置 project info 或替换内置模板路径 |
 | `writing-skills` | 编写/修改/验证 skill 的元 skill |
+| `cospec-dag-planner` | DAG 并行文档生成：拆分目标文档为可并行 section 任务 |
+| `cospec-dag-executor` | DAG 并行文档生成：按 ready-set 调度子 Agent 并合并最终文档 |
+| `cospec-dag-evaluator` | DAG 计划质量评估：检查无环性、结构、占位符、一致性 |
+
+> `cospec-dag-*` skills 是预留扩展机制，现有三阶段默认保持线性，不由任何现有 stage 默认启用。
 
 ## Skill Authoring Rules
 

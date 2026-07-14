@@ -1,8 +1,37 @@
 {
   "name": "cospec",
   "version": "3.0.0",
-  "description": "AI 原生产品规划工作流：需求澄清、用户旅程设计、TR1 用户需求说明书生成",
-  "author": { "name": "afutemp" },
+  "description": "AI 原生产品规划工作流：需求澄清、用户旅程设计、TR1 用户需求说明书生成，支持 DAG 并行文档生成扩展",
+  "author": {
+    "name": "afutemp"
+  },
   "license": "MIT",
-  "keywords": ["product-planning", "requirements", "user-journey", "tr1", "workflow", "clarification"]
+  "homepage": "https://github.com/afutemp/cospec",
+  "repository": "git@github.com:afutemp/cospec.git",
+  "keywords": [
+    "product-planning",
+    "requirements",
+    "user-journey",
+    "tr1",
+    "workflow",
+    "clarification",
+    "dag",
+    "skills"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "cospec",
+    "shortDescription": "AI 原生产品规划工作流",
+    "longDescription": "cospec 提供需求澄清、用户旅程设计、TR1 用户需求说明书生成等产品规划能力，并预留 DAG 并行文档生成扩展机制。",
+    "developerName": "afutemp",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/afutemp/cospec",
+    "defaultPrompt": [
+      "使用 cospec 澄清这个需求",
+      "使用 cospec 设计用户旅程",
+      "使用 cospec 生成 TR1 需求说明书"
+    ]
+  }
 }

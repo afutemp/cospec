@@ -34,6 +34,10 @@ Before starting, read `cospec.config.json` from the plugin root (2 levels above 
 | `config.evaluators["requirement-clarification"]` | Evaluator after clarification; `false` = disable gate |
 | `config.evaluators["user-journey-design"]` | Evaluator after user journey design; `false` = disable gate |
 | `config.evaluators["tr1-requirements-spec"]` | Evaluator after TR1 generation; `false` = disable gate |
+| `config.parallel.enabled` | Reserved: master switch for DAG-based parallel document generation |
+| `config.parallel.stages["<stage-name>"]` | Reserved: enable parallel mode for a specific stage |
+| `config.parallel.max_parallel_tasks` | Max tasks dispatched in one ready-set batch |
+| `config.parallel.evaluator` | DAG plan evaluator skill name; `false` = disable |
 
 ## Entry Determination
 
@@ -101,6 +105,35 @@ At workflow completion, summarize:
 - Where the deliverables are located
 - Any open issues or待确认 items
 - Recommended next steps (e.g., implementation planning, demo preparation)
+
+## DAG-based Parallel Mode (Reserved Extension Point)
+
+cospec now includes DAG-based parallel document generation skills (`cospec-dag-planner`, `cospec-dag-executor`, `cospec-dag-evaluator`) for future sub-skills that need to split a document into parallel sections. **The existing stages remain linear by default.**
+
+When a future stage or sub-skill is configured for parallel mode (`config.parallel.enabled=true` and `config.parallel.stages["<stage-name>"]=true`), the workflow may use this path instead of calling the leaf skill directly:
+
+```text
+product-planning-workflow
+        │
+        ▼
+cospec-dag-planner          (writes .cospec/plans/.../dag.json + task cards)
+        │
+        ▼
+[cospec-dag-evaluator]      (optional, configured by parallel.evaluator)
+        │
+        ▼
+cospec-dag-executor         (dispatches section writers, assembles final document)
+        │
+        ▼
+[existing stage evaluator]  (configured by evaluators.<stage-name>)
+```
+
+Rules:
+
+1. Parallel mode is opt-in per stage and disabled for all existing stages by default.
+2. The leaf skill remains responsible for user-facing SOP and stage-specific decisions.
+3. `product-planning-workflow` decides whether to invoke the DAG path based on `config.parallel.stages[<stage-name>]`.
+4. After the DAG executor returns the assembled document, the workflow continues to user confirmation and the existing stage evaluator (if configured).
 
 ## Red Flags
 

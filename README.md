@@ -36,6 +36,20 @@
 /plugin install cospec
 ```
 
+### Codex 插件方式
+
+在 ChatGPT desktop app 的 Codex 中：
+
+1. 添加 marketplace：
+   ```bash
+   codex plugin marketplace add ./
+   ```
+   或手动创建 `.agents/plugins/marketplace.json`（参考 `.codex/INSTALL.md`）。
+2. 在 ChatGPT desktop app 中打开 **Plugins**，选择 cospec marketplace，安装并启用 **cospec**。
+3. 重启 Codex。
+
+详细说明见 `.codex/INSTALL.md`。
+
 ### 手动安装
 
 将 `hooks/hooks.json` 中的 hook 配置合并到项目的 `.claude/settings.json`。
@@ -53,7 +67,7 @@
 "project": { "product": "SCP" }
 ```
 
-## Skills 清单（9 个）
+## Skills 清单（9 个核心 + 3 个 DAG 并行扩展）
 
 | Skill | 职责 |
 |-------|------|
@@ -66,6 +80,11 @@
 | `tr1-requirements-spec` | TR1 用户需求说明书生成（大/小需求，评审版 + AI 上下文版） |
 | `cospec-configure` | 交互式配置：设置 project info 或替换内置模板路径 |
 | `writing-skills` | 编写/修改/验证 skill 的元 skill |
+| `cospec-dag-planner` | DAG 并行文档生成：拆分目标文档为可并行 section 任务 |
+| `cospec-dag-executor` | DAG 并行文档生成：按 ready-set 调度子 Agent 并合并最终文档 |
+| `cospec-dag-evaluator` | DAG 计划质量评估：检查无环性、结构、占位符、一致性 |
+
+> `cospec-dag-*` skills 是预留扩展机制，现有三阶段默认保持线性。需要在 `cospec.config.json` 中显式开启 `parallel.stages.<stage>` 才会启用。
 
 ## 扩展与接入
 

@@ -59,16 +59,18 @@ After reading the config, output:
   2. templates    — 模板文件
   3. rules        — 规范/检查清单目录
   4. evaluators   — 质量门评估器 skill
-  5. kb           — 知识库访问
-  6. env          — 环境变量与凭证
-  7. 全部配置
+  5. parallel     — DAG 并行文档生成（预留扩展点）
+  6. kb           — 知识库访问
+  7. env          — 环境变量与凭证
+  8. 全部配置
+  9. 还原默认配置
 ```
 
 ---
 
 ## Restore: 还原默认配置
 
-If the user selects **8. 还原默认配置**, execute the following:
+If the user selects **9. 还原默认配置**, execute the following:
 
 1. Check if `<plugin-root>/cospec.config.json.bak` exists.
 2. **If backup exists**: Copy the backup over the current config, then output:
@@ -138,6 +140,32 @@ For each evaluator key, ask:
 > "TR1 需求说明书阶段后是否启用质量门？输入自定义 evaluator skill 名称，输入 `false` 禁用，或跳过使用默认：`tr1-requirements-spec-evaluator`。"
 
 Validation: string values must not be empty; `false` is valid; skip is valid.
+
+---
+
+### `parallel` — DAG 并行文档生成（预留扩展点）
+
+These settings control the optional DAG-based parallel document generation mechanism. All existing stages remain linear by default.
+
+**enabled**
+> "是否启用 DAG 并行文档生成总开关？输入 `true` 或 `false`，默认 `false`。当前仅作为预留机制，现有阶段默认不开启。"
+
+**max_parallel_tasks**
+> "单批最多并行调度多少个 section-writing 子 Agent？输入数字，默认 `4`。"
+
+**evaluator**
+> "DAG 计划执行前是否使用评估器？输入自定义 skill 名称，输入 `false` 禁用，或跳过使用默认：`cospec-dag-evaluator`。"
+
+**stages.requirement-clarification**
+> "是否为 `requirement-clarification` 阶段启用并行生成？输入 `true` 或 `false`，默认 `false`。（预留，当前不建议开启）"
+
+**stages.user-journey-design**
+> "是否为 `user-journey-design` 阶段启用并行生成？输入 `true` 或 `false`，默认 `false`。（预留，当前不建议开启）"
+
+**stages.tr1-requirements-spec**
+> "是否为 `tr1-requirements-spec` 阶段启用并行生成？输入 `true` 或 `false`，默认 `false`。（预留，当前不建议开启）"
+
+Validation: boolean values must be `true` or `false`; `evaluator` must be a non-empty string or `false`.
 
 ---
 

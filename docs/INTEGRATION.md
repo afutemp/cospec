@@ -96,7 +96,68 @@ cospec 在每个 workflow 阶段后预留了 evaluator 配置位：
 - 若为字符串，调用对应 skill 名称进行评审，返回等级（如 A/B/C/D/F）和问题列表；
 - 评审不通过（如低于 B）则返工，通过才允许进入下一阶段。
 
-### 2.4 修改某个 Skill 的行为
+### 2.4 DAG 并行文档生成（预留扩展点）
+
+cospec 提供了一套可选的 DAG 并行文档生成机制，用于未来把单个 stage 的文档拆成多个 section 并行生成：
+
+```
+product-planning-workflow
+        │
+        ▼
+cospec-dag-planner          # 拆分文档为 DAG + task cards
+        │
+        ▼
+[cospec-dag-evaluator]      # 可选：评估 DAG 计划质量
+        │
+        ▼
+cospec-dag-executor         # 并行调度 section writers 并合并
+        │
+        ▼
+[existing stage evaluator]
+```
+
+相关 skill：
+
+- `cospec-dag-planner`
+- `cospec-dag-executor`
+- `cospec-dag-evaluator`
+
+配置项在 `cospec.config.json` 的 `parallel` 字段：
+
+```json
+{
+  "parallel": {
+    "enabled": false,
+    "max_parallel_tasks": 4,
+    "evaluator": "cospec-dag-evaluator",
+    "stages": {
+      "requirement-clarification": false,
+      "user-journey-design": false,
+      "tr1-requirements-spec": false
+    }
+  }
+}
+```
+
+- `enabled`：总开关。
+- `max_parallel_tasks`：单批最多并行任务数。
+- `evaluator`：DAG 计划评估器 skill 名称，或 `false` 禁用。
+- `stages.<stage-name>`：为特定 stage 启用并行模式（当前全部默认 `false`）。
+
+后续接入方式：
+
+1. 确认目标 stage 适合拆分为独立 section（如 TR1 大需求评审版按章节拆分）。
+2. 将该 stage 的 `parallel.stages.<stage-name>` 设为 `true`。
+3. 在 `product-planning-workflow` 中，当该 stage 启用并行模式时，调用 `cospec-dag-planner` → 可选 `cospec-dag-evaluator` → `cospec-dag-executor`。
+4. DAG 产物存放在 `.cospec/plans/YY-MM-DD-<project>/`，运行时产物存放在 `.cospec/tasks/<task-id>/`。
+
+注意：
+
+- 现有三阶段默认保持线性，不启用并行模式。
+- 新增自定义子 skill 也可以直接调用 `cospec-dag-planner` + `cospec-dag-executor`。
+- `.cospec/` 目录为运行时产物，已加入 `.gitignore`。
+
+### 2.5 修改某个 Skill 的行为
 
 每个 skill 都是纯文本行为契约，修改即改变 AI 行为：
 
