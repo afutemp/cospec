@@ -87,9 +87,9 @@ The executor and its subagents write:
 4. Record `T_EXEC_START` in `.cospec/runs/<RUN_DIR>/execution/time-stats.log`.
 5. Compute ready set and dispatch `skill-invoker` subagents in parallel.
 6. Read returned manifests.
-7. For each `NEEDS_CONTEXT`, extract the question and add it to the question queue.
+7. For each `NEEDS_CONTEXT`, extract **all** of its questions (a single `NEEDS_CONTEXT` may carry several independent questions) and add them to the question queue as one group.
 8. If the queue has a question and no question is currently active, ask the user.
-9. When an answer is received, re-dispatch the corresponding `skill-invoker` subagent with the answer.
+9. When **all** questions in a `NEEDS_CONTEXT` group have been answered, re-dispatch the corresponding `skill-invoker` subagent **once** with the full answer set. Do not re-dispatch per question.
 10. Repeat ready-set computation until all tasks are `DONE`, `FAILED`, or `BLOCKED`.
 11. Record `T_FIRST_COMPLETE` in `.cospec/runs/<RUN_DIR>/execution/time-stats.log`.
 12. Return final summary.
@@ -100,7 +100,7 @@ This executor uses **batch + barrier** scheduling on every host platform (Claude
 
 - Each ready set is dispatched as **one batch** — all subagents started together.
 - The main agent then **waits for the entire batch to return** before it reasons again.
-- This is deliberate: it makes the `NEEDS_CONTEXT` question queue well-defined (a batch may surface several questions at once → enqueue all, serve one at a time).
+- This is deliberate: it makes the `NEEDS_CONTEXT` question queue well-defined. A batch may surface several `NEEDS_CONTEXT` responses at once, and a single `NEEDS_CONTEXT` may itself carry several independent questions — enqueue all of them, then serve the user one question at a time and re-dispatch only after every question belonging to the same `NEEDS_CONTEXT` has been answered.
 
 Never use the host platform's background/async subagent mode (e.g. Claude Code's `run_in_background`, or any "fire-and-forget" dispatch). Background dispatch breaks the barrier assumption, makes scheduling non-deterministic, and is not portable (Codex/Cursor have no equivalent subagent-level background mode anyway). On Codex/Cursor the default subagent behavior is already batch+barrier, so this rule just reinforces the platform default.
 
@@ -115,11 +115,28 @@ Never use the host platform's background/async subagent mode (e.g. Claude Code's
 ## Question Queue Rules
 
 1. Only the main agent may ask the user questions.
-2. When a subagent returns `NEEDS_CONTEXT`, add its question to the queue.
+2. When a subagent returns `NEEDS_CONTEXT`, add **all of its questions** to the queue as one group (a single `NEEDS_CONTEXT` may carry several independent questions — see the skill-invoker contract).
 3. At most one question is presented to the user at a time.
-4. After the user answers, route the answer to the corresponding subagent and re-dispatch it.
-5. Because dispatch is foreground-parallel with barrier semantics, when a batch returns, several tasks may report `NEEDS_CONTEXT` at once — enqueue all of them, then serve them one at a time. Tasks that returned `DONE` in the same batch are already complete; their downstream may become ready in the next round.
-6. If the queue has multiple questions, process them in the order the corresponding tasks became ready.
+4. Accumulate answers for the questions in a `NEEDS_CONTEXT` group. After the user has answered **every** question in that group, re-dispatch the corresponding subagent **once** with the full answer set — not once per question.
+5. Because dispatch is foreground-parallel with barrier semantics, when a batch returns, several tasks may report `NEEDS_CONTEXT` at once — enqueue all of them (each possibly carrying several questions), then serve them one question at a time. Tasks that returned `DONE` in the same batch are already complete; their downstream may become ready in the next round.
+6. If the queue holds multiple questions, serve them in the order the corresponding `NEEDS_CONTEXT` groups were enqueued; within a group, serve in the order the subagent listed them.
+
+### Queue Entry Structure
+
+A "group" in the rules above is exactly one queue entry. Bind each entry to its emitting task at enqueue time and never rebind it — this is what keeps answer routing unambiguous when several tasks return `NEEDS_CONTEXT` in the same batch.
+
+```text
+queue entry = {
+  task_id,                                            # the task whose subagent emitted this NEEDS_CONTEXT — the only legal re-dispatch target
+  questions: [ { question, why_needed, next_step } ], # copied verbatim from that manifest's pending_questions
+  answers:   { question -> answer },                  # filled one at a time as the user replies; written only into this entry
+}
+```
+
+- **Enqueue:** one entry per `NEEDS_CONTEXT`, stamped with the returning task's `task_id`; copy `pending_questions` into `questions`; `answers` starts empty (rule 2).
+- **Serve:** the entry with unanswered questions, in enqueue order; within it, ask the next unanswered question (rules 3, 6).
+- **Accumulate:** write the reply into **this entry's** `answers` keyed by its question — never into another entry, even one whose question looks related.
+- **Re-dispatch:** once `answers` covers every `questions` item, re-dispatch the subagent for **that `task_id` once** with the full `answers`, then drop the entry (rule 4). Never re-dispatch per question, and never route one entry's answers to a different task.
 
 ## skill-invoker Subagent
 
@@ -163,7 +180,7 @@ Each skill-invoker subagent writes:
   "artifacts": {
     "results": ".cospec/runs/<RUN_DIR>/<task-id>/results.md"
   },
-  "pending_question": null,
+  "pending_questions": [],
   "blocking_reason": null,
   "ready_for_downstream": true
 }
@@ -171,11 +188,13 @@ Each skill-invoker subagent writes:
 
 Allowed `status` values: `RUNNING`, `NEEDS_CONTEXT`, `DONE`, `FAILED`, `BLOCKED`.
 
+When `status == NEEDS_CONTEXT`, `pending_questions` is a **non-empty** list of independent questions, each an object `{ question, why_needed, next_step }`. Only include a question if its answer does **not** depend on another question in the same batch; questions that depend on a prior answer must be returned in the next `NEEDS_CONTEXT` round (after the current batch is answered and the subagent is re-dispatched). When the status is not `NEEDS_CONTEXT`, `pending_questions` is `[]`.
+
 ## Status Handling
 
 **DONE:** Read the manifest path; downstream tasks may become ready.  
 **DONE_WITH_CONCERNS:** Treat as `DONE` for scheduling, but record concerns in the final summary.  
-**NEEDS_CONTEXT:** Add question to queue. Do not dispatch downstream tasks until resolved.  
+**NEEDS_CONTEXT:** Add its questions to the queue as one group. Serve them to the user one at a time; after all are answered, re-dispatch the subagent **once** with the full answer set. Do not dispatch downstream tasks until resolved.  
 **BLOCKED:** Stop downstream dispatch. Provide context or escalate to user.  
 **FAILED:** Dispatch fixer subagent using artifact paths. Escalate after 3 rounds.
 

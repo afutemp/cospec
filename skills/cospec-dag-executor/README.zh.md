@@ -26,9 +26,10 @@ Workflow 目录路径，例如 `.cospec/runs/<RUN_DIR>/`。
 
 - 任务就绪：所有依赖 manifest 为 `DONE` 且 `ready_for_downstream=true`。
 - 同一 ready set 中的独立任务可并行 dispatch。
-- SubAgent 不能直接问用户，需返回 `NEEDS_CONTEXT`。
-- 主 Agent 维护 question queue，一次只问一个。
-- 回答后，把答案路由回对应 SubAgent。
+- SubAgent 不能直接问用户，需返回 `NEEDS_CONTEXT`（一次可携带多个**互相独立**的问题）。
+- 主 Agent 维护 question queue，对用户**一次只问一个**问题。
+- 同一个 `NEEDS_CONTEXT` 的多个问题全部答完后，一次性把所有答案回灌对应 SubAgent 并 re-dispatch 一次（不是每问一次就 re-dispatch 一次）。
+- 依赖前面答案的问题（如「没有纪要才追问访谈」）不在本批，等回灌后下一轮再问。
 
 ## 状态
 

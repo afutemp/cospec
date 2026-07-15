@@ -25,10 +25,19 @@ Agent:
 
     ## Handling User Input
 
-    If the skill you are invoking requires a decision or clarification from the user:
+    If the skill you are invoking requires decisions or clarification from the user:
 
     1. Pause execution.
-    2. Return a `NEEDS_CONTEXT` report with:
+    2. Collect **every** question the skill currently needs answered.
+    3. Return a single `NEEDS_CONTEXT` report carrying all of them — do not drip-feed one question per round.
+
+    ### Which questions belong in one `NEEDS_CONTEXT`
+
+    Include a question in the current batch **only if its answer does not depend on the answer to any other question in the same batch**. Independent questions (e.g. "do you have meeting notes?" and "single- or multi-meeting mode?") must be batched together so the orchestrator asks them in one pass and re-dispatches you once.
+
+    If a question's content depends on a prior answer (e.g. only ask "do you have interview transcripts?" if the user first says they have no meeting notes), **exclude it** from this batch. The orchestrator re-dispatches you with the first answers, and you return it in the next `NEEDS_CONTEXT`.
+
+    For each question provide:
        - The exact question to ask the user.
        - Why this question is needed.
        - What you will do after receiving the answer.
@@ -48,7 +57,7 @@ Agent:
          "artifacts": {
            "results": ".cospec/runs/<RUN_DIR>/[task-id]/results.md"
          },
-         "pending_question": null,
+         "pending_questions": [],
          "blocking_reason": null,
          "ready_for_downstream": true
        }
@@ -67,7 +76,9 @@ Agent:
     Manifest: `.cospec/runs/<RUN_DIR>/[task-id]/manifest.json`
     Ready for downstream: [true | false]
     Blocking reason: [one sentence or null]
-    Question: [if NEEDS_CONTEXT, the exact question; otherwise null]
-    Question context: [if NEEDS_CONTEXT, why it is needed; otherwise null]
+    Questions: [if NEEDS_CONTEXT, a non-empty list; otherwise empty]
+      - Question: <exact question>
+        Why needed: <reason>
+        Next step: <what you will do after receiving the answer>
     ```
 ```
