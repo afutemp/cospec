@@ -116,7 +116,7 @@ cospec 的 workflow entry skills 使用一套共享的 DAG 基础设施来编排
 product-planning-workflow
         │
         ▼
-cospec-dag-planner          # 可选：生成 .cospec/workflow/dag.json + task cards
+cospec-dag-planner          # 可选：生成 .cospec/runs/<RUN_DIR>/dag.json + task cards
         │
         ▼
 [cospec-dag-evaluator]      # 可选：评估 DAG 计划质量
@@ -136,10 +136,10 @@ skill-invoker SubAgent ──→ tr1-requirements-spec
 - `cospec-dag-executor`：按 ready set 并行调度 `skill-invoker` SubAgents。
 - `cospec-dag-evaluator`：评估 DAG 合法性。
 
-DAG 产物存放在 `.cospec/workflow/`：
+DAG 产物存放在 `.cospec/runs/<RUN_DIR>/`：
 
 ```text
-.cospec/workflow/
+.cospec/runs/<RUN_DIR>/
   dag.json
   index.md
   tasks/<task-id>.md

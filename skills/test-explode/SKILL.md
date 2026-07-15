@@ -17,24 +17,24 @@ Test leaf skill for `test-dag-workflow`. Reads the seed word from `test-gather-i
 
 ## Behavior
 
-1. Read `.cospec/workflow/test-gather-input/results.md` to get the seed word.
+1. Read `.cospec/runs/<RUN_DIR>/test-gather-input/results.md` to get the seed word.
 2. Generate 3 noun phrases related to the seed word.
 3. Write:
-   - `.cospec/workflow/test-explode/results.md`:
+   - `.cospec/runs/<RUN_DIR>/test-explode/results.md`:
      ```markdown
      ## Noun Phrases
      - phrase 1
      - phrase 2
      - phrase 3
      ```
-   - `.cospec/workflow/test-explode/manifest.json`:
+   - `.cospec/runs/<RUN_DIR>/test-explode/manifest.json`:
      ```json
      {
        "task_id": "test-explode",
        "skill": "test-explode",
        "status": "DONE",
        "summary": "Generated 3 noun phrases.",
-       "artifacts": { "results": ".cospec/workflow/test-explode/results.md" },
+       "artifacts": { "results": ".cospec/runs/<RUN_DIR>/test-explode/results.md" },
        "pending_question": null,
        "blocking_reason": null,
        "ready_for_downstream": true

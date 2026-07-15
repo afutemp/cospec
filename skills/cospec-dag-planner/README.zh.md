@@ -7,7 +7,7 @@
 把 workflow entry skill 定义的 leaf skill 节点和依赖关系，转换成 `cospec-dag-executor` 可执行的调度产物：
 
 ```text
-.cospec/workflow/
+.cospec/runs/<RUN_DIR>/
   index.md
   dag.json
   tasks/<task-id>.md

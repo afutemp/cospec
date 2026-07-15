@@ -10,7 +10,7 @@ Agent:
     You are a skill DAG extraction specialist. Your job is to convert a workflow node definition into a skill-level DAG plan.
 
     **Workflow name:** [workflow_name]
-    **Output directory:** `.cospec/workflow/`
+    **Output directory:** `.cospec/runs/<RUN_DIR>/`
     **Nodes:**
     ```json
     [node definitions from caller]
@@ -26,7 +26,7 @@ Agent:
 
     ## Output Artifacts
 
-    Write the following files under `.cospec/workflow/`:
+    Write the following files under `.cospec/runs/<RUN_DIR>/`:
 
     ```text
     index.md              # human-readable workflow overview
@@ -42,8 +42,8 @@ Agent:
     **Workflow:** [workflow_name]
 
     ## Scheduling artifacts
-    - DAG: `.cospec/workflow/dag.json`
-    - Task cards: `.cospec/workflow/tasks/`
+    - DAG: `.cospec/runs/<RUN_DIR>/dag.json`
+    - Task cards: `.cospec/runs/<RUN_DIR>/tasks/`
 
     ## Task DAG
     ```mermaid
@@ -55,9 +55,9 @@ Agent:
 
     ### [task-id]
     **Skill:** [skill-name]
-    **Task card:** `.cospec/workflow/tasks/[task-id].md`
+    **Task card:** `.cospec/runs/<RUN_DIR>/tasks/[task-id].md`
     **Depends on:** [deps or "(none)"]
-    **Produces manifest:** `.cospec/workflow/[task-id]/manifest.json`
+    **Produces manifest:** `.cospec/runs/<RUN_DIR>/[task-id]/manifest.json`
     ```
 
     ### dag.json
@@ -65,13 +65,13 @@ Agent:
     ```json
     {
       "workflow": "[workflow_name]",
-      "plan_file": ".cospec/workflow/index.md",
+      "plan_file": ".cospec/runs/<RUN_DIR>/index.md",
       "tasks": [
         {
           "id": "[task-id]",
-          "task_file": ".cospec/workflow/tasks/[task-id].md",
+          "task_file": ".cospec/runs/<RUN_DIR>/tasks/[task-id].md",
           "depends_on": ["..."],
-          "produces": [".cospec/workflow/[task-id]/manifest.json"]
+          "produces": [".cospec/runs/<RUN_DIR>/[task-id]/manifest.json"]
         }
       ]
     }
@@ -104,8 +104,8 @@ Agent:
     - [...]
 
     ## Required Output Artifacts
-    - `.cospec/workflow/[task-id]/manifest.json`
-    - `.cospec/workflow/[task-id]/results.md`
+    - `.cospec/runs/<RUN_DIR>/[task-id]/manifest.json`
+    - `.cospec/runs/<RUN_DIR>/[task-id]/results.md`
     ```
 
     ## Self-Check
@@ -123,7 +123,7 @@ Agent:
 
     ```markdown
     Status: DONE
-    Plan directory: `.cospec/workflow/`
+    Plan directory: `.cospec/runs/<RUN_DIR>/`
     Tasks: [N]
     Task ids: [list]
     ```

@@ -18,7 +18,7 @@ description: Use before executing a skill-level DAG plan — evaluates DAG acycl
 
 ## Input Contract
 
-调用方传入 workflow 目录路径（例如 `.cospec/workflow/`）。本 skill 读取：
+调用方传入 workflow 目录路径（例如 `.cospec/runs/<RUN_DIR>/`）。本 skill 读取：
 
 - `index.md`
 - `dag.json`
@@ -35,7 +35,7 @@ description: Use before executing a skill-level DAG plan — evaluates DAG acycl
 质量报告写入：
 
 ```text
-.cospec/workflow/quality-reports/YYYY-MM-DD-cospec-dag-quality-report.md
+.cospec/runs/<RUN_DIR>/quality-reports/YYYY-MM-DD-cospec-dag-quality-report.md
 ```
 
 ## Evaluation Dimensions

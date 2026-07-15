@@ -61,7 +61,7 @@ brainstorming
 | 已有用户旅程文档 / 结构化需求文档 / 直接要写 TR1 | `tr1-only-workflow` |
 | 无法判断 | `product-planning-workflow` |
 
-每个 workflow entry skill 生成 skill 级 DAG 产物（`.cospec/workflow/dag.json` + task cards），然后调用 `cospec-dag-executor` 并行调度 `skill-invoker` SubAgents。SubAgents 调用对应的 leaf skills。
+每个 workflow entry skill 生成 skill 级 DAG 产物（`.cospec/runs/<RUN_DIR>/dag.json` + task cards），然后调用 `cospec-dag-executor` 并行调度 `skill-invoker` SubAgents。SubAgents 调用对应的 leaf skills。
 
 ### 管线阶段明细
 

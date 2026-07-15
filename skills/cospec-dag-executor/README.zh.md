@@ -4,16 +4,16 @@
 
 ## 职责
 
-读取 skill 级 DAG 计划（`.cospec/workflow/dag.json`），以 orchestrator-only 主 Agent 的方式调度 `skill-invoker` SubAgent，执行 ready set 中的 skill，并处理 `NEEDS_CONTEXT` 错峰提问。
+读取 skill 级 DAG 计划（`.cospec/runs/<RUN_DIR>/dag.json`），以 orchestrator-only 主 Agent 的方式调度 `skill-invoker` SubAgent，执行 ready set 中的 skill，并处理 `NEEDS_CONTEXT` 错峰提问。
 
 ## 输入
 
-Workflow 目录路径，例如 `.cospec/workflow/`。
+Workflow 目录路径，例如 `.cospec/runs/<RUN_DIR>/`。
 
 ## 输出
 
 ```text
-.cospec/workflow/
+.cospec/runs/<RUN_DIR>/
   execution/
     run-state.json
     time-stats.log
@@ -39,3 +39,4 @@ Workflow 目录路径，例如 `.cospec/workflow/`。
 - 主 Agent 不直接执行 leaf skill。
 - 不向 SubAgent 粘贴大段正文，只传 artifact paths。
 - 必须记录 `T_EXEC_START` 和 `T_FIRST_COMPLETE`。
+- **runs 产物保留，不自动删除**；仅在用户明确要求时手动 `rm -rf .cospec/runs/`。

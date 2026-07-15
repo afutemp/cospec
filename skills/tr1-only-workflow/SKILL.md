@@ -19,7 +19,12 @@ This workflow entry skill orchestrates a single leaf skill: `tr1-requirements-sp
 
 ## Workflow
 
-1. **Generate DAG artifacts** under `.cospec/workflow/`:
+0. **Generate RUN_DIR** (run-once, reuse for all artifacts):
+   ```bash
+   RUN_DIR=".cospec/runs/$(date '+%y-%m-%d-%H%M%S')-tr1-only-workflow"
+   ```
+   Every `<RUN_DIR>` below resolves to this concrete directory.
+1. **Generate DAG artifacts** under `$RUN_DIR/`:
    - `index.md`
    - `dag.json`
    - `tasks/tr1-requirements-spec.md`
@@ -64,8 +69,8 @@ Generate the TR1 requirements specification based on the user's existing journey
 - Produces the required TR1 artifacts.
 
 ## Required Output Artifacts
-- `.cospec/workflow/tr1-requirements-spec/manifest.json`
-- `.cospec/workflow/tr1-requirements-spec/results.md`
+- `.cospec/runs/<RUN_DIR>/tr1-requirements-spec/manifest.json`
+- `.cospec/runs/<RUN_DIR>/tr1-requirements-spec/results.md`
 ```
 
 ## Output

@@ -14,7 +14,7 @@ description: Orchestrate the default cospec product planning pipeline — requir
 ## Responsibility
 
 - 编排默认产品规划主链：`requirement-clarification` → `user-journey-design` → `tr1-requirements-spec`。
-- 生成 `.cospec/workflow/` 下的 DAG 产物。
+- 生成 `.cospec/runs/<RUN_DIR>/` 下的 DAG 产物。
 - 调用 `cospec-dag-executor` 执行 DAG。
 - 汇总最终产物。
 
@@ -45,7 +45,12 @@ tr1-requirements-spec
 
 ## The Process
 
-1. **Create DAG artifacts** under `.cospec/workflow/`:
+0. **Generate RUN_DIR** (run-once, reuse for all artifacts):
+   ```bash
+   RUN_DIR=".cospec/runs/$(date '+%y-%m-%d-%H%M%S')-product-planning-workflow"
+   ```
+   Every `<RUN_DIR>` below resolves to this concrete directory.
+1. **Create DAG artifacts** under `$RUN_DIR/`:
    - `index.md`
    - `dag.json`
    - `tasks/requirement-clarification.md`
@@ -85,8 +90,8 @@ Clarify the user's raw idea into a structured clarification deliverable.
 - Covers all key aspects of the user's request.
 
 ## Required Output Artifacts
-- `.cospec/workflow/requirement-clarification/manifest.json`
-- `.cospec/workflow/requirement-clarification/results.md`
+- `.cospec/runs/<RUN_DIR>/requirement-clarification/manifest.json`
+- `.cospec/runs/<RUN_DIR>/requirement-clarification/results.md`
 ```
 
 ### user-journey-design
@@ -104,7 +109,7 @@ Default product planning workflow — stage 2.
 requirement-clarification
 
 ## Input Artifacts
-- `.cospec/workflow/requirement-clarification/manifest.json`
+- `.cospec/runs/<RUN_DIR>/requirement-clarification/manifest.json`
 
 ## Task Spec
 Design the user journey based on the clarified requirements.
@@ -117,8 +122,8 @@ Design the user journey based on the clarified requirements.
 - Aligned with clarification output.
 
 ## Required Output Artifacts
-- `.cospec/workflow/user-journey-design/manifest.json`
-- `.cospec/workflow/user-journey-design/results.md`
+- `.cospec/runs/<RUN_DIR>/user-journey-design/manifest.json`
+- `.cospec/runs/<RUN_DIR>/user-journey-design/results.md`
 ```
 
 ### tr1-requirements-spec
@@ -136,7 +141,7 @@ Default product planning workflow — stage 3.
 user-journey-design
 
 ## Input Artifacts
-- `.cospec/workflow/user-journey-design/manifest.json`
+- `.cospec/runs/<RUN_DIR>/user-journey-design/manifest.json`
 
 ## Task Spec
 Generate the TR1 requirements specification from the user journey.
@@ -149,8 +154,8 @@ Generate the TR1 requirements specification from the user journey.
 - Follows configured TR1 template.
 
 ## Required Output Artifacts
-- `.cospec/workflow/tr1-requirements-spec/manifest.json`
-- `.cospec/workflow/tr1-requirements-spec/results.md`
+- `.cospec/runs/<RUN_DIR>/tr1-requirements-spec/manifest.json`
+- `.cospec/runs/<RUN_DIR>/tr1-requirements-spec/results.md`
 ```
 
 ## Output

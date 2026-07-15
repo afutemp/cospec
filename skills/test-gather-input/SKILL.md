@@ -25,23 +25,23 @@ Test leaf skill for `test-dag-workflow`. Asks the user for a single seed noun an
    Task: test-gather-input
    Question: 请给我一个名词作为"种子词"，我会围绕它扩展内容。
    Question context: 需要一个种子词来驱动后续的 explode/enrich/merge 任务。
-   Manifest: .cospec/workflow/test-gather-input/manifest.json
+   Manifest: .cospec/runs/<RUN_DIR>/test-gather-input/manifest.json
    ```
 
 3. After the user answers, the answer is routed back. Then write:
-   - `.cospec/workflow/test-gather-input/results.md`:
+   - `.cospec/runs/<RUN_DIR>/test-gather-input/results.md`:
      ```markdown
      ## Seed Word
      <user-provided noun>
      ```
-   - `.cospec/workflow/test-gather-input/manifest.json`:
+   - `.cospec/runs/<RUN_DIR>/test-gather-input/manifest.json`:
      ```json
      {
        "task_id": "test-gather-input",
        "skill": "test-gather-input",
        "status": "DONE",
        "summary": "Collected seed word.",
-       "artifacts": { "results": ".cospec/workflow/test-gather-input/results.md" },
+       "artifacts": { "results": ".cospec/runs/<RUN_DIR>/test-gather-input/results.md" },
        "pending_question": null,
        "blocking_reason": null,
        "ready_for_downstream": true

@@ -37,8 +37,8 @@ Agent:
 
     When the skill completes, write:
 
-    1. `.cospec/workflow/[task-id]/results.md` — a summary of what the skill produced.
-    2. `.cospec/workflow/[task-id]/manifest.json` — status report:
+    1. `.cospec/runs/<RUN_DIR>/[task-id]/results.md` — a summary of what the skill produced.
+    2. `.cospec/runs/<RUN_DIR>/[task-id]/manifest.json` — status report:
        ```json
        {
          "task_id": "[task-id]",
@@ -46,7 +46,7 @@ Agent:
          "status": "DONE",
          "summary": "One sentence describing what the skill produced.",
          "artifacts": {
-           "results": ".cospec/workflow/[task-id]/results.md"
+           "results": ".cospec/runs/<RUN_DIR>/[task-id]/results.md"
          },
          "pending_question": null,
          "blocking_reason": null,
@@ -64,7 +64,7 @@ Agent:
     ```markdown
     Status: [DONE | NEEDS_CONTEXT | BLOCKED | FAILED]
     Task: [task-id]
-    Manifest: `.cospec/workflow/[task-id]/manifest.json`
+    Manifest: `.cospec/runs/<RUN_DIR>/[task-id]/manifest.json`
     Ready for downstream: [true | false]
     Blocking reason: [one sentence or null]
     Question: [if NEEDS_CONTEXT, the exact question; otherwise null]

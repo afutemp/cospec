@@ -25,23 +25,23 @@ Test leaf skill for `test-dag-workflow`. Asks the user for a tone preference and
    Task: test-preflight
    Question: 你想要正式语气还是轻松语气？
    Question context: merge 任务需要知道最终段落的语气风格。
-   Manifest: .cospec/workflow/test-preflight/manifest.json
+   Manifest: .cospec/runs/<RUN_DIR>/test-preflight/manifest.json
    ```
 
 3. After the user answers, write:
-   - `.cospec/workflow/test-preflight/results.md`:
+   - `.cospec/runs/<RUN_DIR>/test-preflight/results.md`:
      ```markdown
      ## Tone
      <user-provided tone, e.g. 正式 / 轻松>
      ```
-   - `.cospec/workflow/test-preflight/manifest.json`:
+   - `.cospec/runs/<RUN_DIR>/test-preflight/manifest.json`:
      ```json
      {
        "task_id": "test-preflight",
        "skill": "test-preflight",
        "status": "DONE",
        "summary": "Collected tone preference.",
-       "artifacts": { "results": ".cospec/workflow/test-preflight/results.md" },
+       "artifacts": { "results": ".cospec/runs/<RUN_DIR>/test-preflight/results.md" },
        "pending_question": null,
        "blocking_reason": null,
        "ready_for_downstream": true

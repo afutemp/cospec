@@ -14,7 +14,7 @@
 
 ## 流程
 
-1. 生成 `.cospec/workflow/` 下的 DAG 产物。
+1. 生成 `.cospec/runs/<RUN_DIR>/` 下的 DAG 产物。
 2. 可选调用 `cospec-dag-evaluator`。
 3. 调用 `cospec-dag-executor` 执行 `tr1-requirements-spec`。
 4. 汇总产物路径。

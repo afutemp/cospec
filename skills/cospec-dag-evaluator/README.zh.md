@@ -8,14 +8,14 @@
 
 ## 输入
 
-Workflow 目录路径，例如 `.cospec/workflow/`。
+Workflow 目录路径，例如 `.cospec/runs/<RUN_DIR>/`。
 
 ## 输出
 
 质量报告路径：
 
 ```text
-.cospec/workflow/quality-reports/YYYY-MM-DD-cospec-dag-quality-report.md
+.cospec/runs/<RUN_DIR>/quality-reports/YYYY-MM-DD-cospec-dag-quality-report.md
 ```
 
 ## 评估维度

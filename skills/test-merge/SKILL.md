@@ -18,25 +18,25 @@ Test leaf skill for `test-dag-workflow`. Reads outputs from `test-explode`, `tes
 ## Behavior
 
 1. Read:
-   - `.cospec/workflow/test-explode/results.md` (noun phrases)
-   - `.cospec/workflow/test-enrich/results.md` (descriptive phrases)
-   - `.cospec/workflow/test-preflight/results.md` (tone)
+   - `.cospec/runs/<RUN_DIR>/test-explode/results.md` (noun phrases)
+   - `.cospec/runs/<RUN_DIR>/test-enrich/results.md` (descriptive phrases)
+   - `.cospec/runs/<RUN_DIR>/test-preflight/results.md` (tone)
 2. Compose one short paragraph that weaves the phrases together in the requested tone.
 3. Write:
-   - `.cospec/workflow/test-merge/results.md`:
+   - `.cospec/runs/<RUN_DIR>/test-merge/results.md`:
      ```markdown
      ## Final Paragraph
 
      <composed paragraph>
      ```
-   - `.cospec/workflow/test-merge/manifest.json`:
+   - `.cospec/runs/<RUN_DIR>/test-merge/manifest.json`:
      ```json
      {
        "task_id": "test-merge",
        "skill": "test-merge",
        "status": "DONE",
        "summary": "Composed final paragraph.",
-       "artifacts": { "results": ".cospec/workflow/test-merge/results.md" },
+       "artifacts": { "results": ".cospec/runs/<RUN_DIR>/test-merge/results.md" },
        "pending_question": null,
        "blocking_reason": null,
        "ready_for_downstream": true

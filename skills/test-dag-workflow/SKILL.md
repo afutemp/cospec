@@ -49,7 +49,12 @@ Round 3 (after explode + enrich + preflight DONE): test-merge
 
 ## The Process
 
-1. **Create DAG artifacts** under `.cospec/workflow/`:
+0. **Generate RUN_DIR** (run-once, reuse for all artifacts):
+   ```bash
+   RUN_DIR=".cospec/runs/$(date '+%y-%m-%d-%H%M%S')-test-dag-workflow"
+   ```
+   Every `<RUN_DIR>` below resolves to this concrete directory.
+1. **Create DAG artifacts** under `$RUN_DIR/`:
    - `index.md`
    - `dag.json`
    - `tasks/test-gather-input.md`
@@ -66,37 +71,37 @@ Round 3 (after explode + enrich + preflight DONE): test-merge
 ```json
 {
   "workflow": "test-dag-workflow",
-  "plan_file": ".cospec/workflow/index.md",
+  "plan_file": ".cospec/runs/<RUN_DIR>/index.md",
   "tasks": [
     {
       "id": "test-gather-input",
-      "task_file": ".cospec/workflow/tasks/test-gather-input.md",
+      "task_file": ".cospec/runs/<RUN_DIR>/tasks/test-gather-input.md",
       "depends_on": [],
-      "produces": [".cospec/workflow/test-gather-input/manifest.json"]
+      "produces": [".cospec/runs/<RUN_DIR>/test-gather-input/manifest.json"]
     },
     {
       "id": "test-preflight",
-      "task_file": ".cospec/workflow/tasks/test-preflight.md",
+      "task_file": ".cospec/runs/<RUN_DIR>/tasks/test-preflight.md",
       "depends_on": [],
-      "produces": [".cospec/workflow/test-preflight/manifest.json"]
+      "produces": [".cospec/runs/<RUN_DIR>/test-preflight/manifest.json"]
     },
     {
       "id": "test-explode",
-      "task_file": ".cospec/workflow/tasks/test-explode.md",
+      "task_file": ".cospec/runs/<RUN_DIR>/tasks/test-explode.md",
       "depends_on": ["test-gather-input"],
-      "produces": [".cospec/workflow/test-explode/manifest.json"]
+      "produces": [".cospec/runs/<RUN_DIR>/test-explode/manifest.json"]
     },
     {
       "id": "test-enrich",
-      "task_file": ".cospec/workflow/tasks/test-enrich.md",
+      "task_file": ".cospec/runs/<RUN_DIR>/tasks/test-enrich.md",
       "depends_on": ["test-gather-input"],
-      "produces": [".cospec/workflow/test-enrich/manifest.json"]
+      "produces": [".cospec/runs/<RUN_DIR>/test-enrich/manifest.json"]
     },
     {
       "id": "test-merge",
-      "task_file": ".cospec/workflow/tasks/test-merge.md",
+      "task_file": ".cospec/runs/<RUN_DIR>/tasks/test-merge.md",
       "depends_on": ["test-explode", "test-enrich", "test-preflight"],
-      "produces": [".cospec/workflow/test-merge/manifest.json"]
+      "produces": [".cospec/runs/<RUN_DIR>/test-merge/manifest.json"]
     }
   ]
 }
@@ -132,8 +137,8 @@ Ask the user for a single noun (the "seed word"). This skill is interactive and 
 - After the user answers, writes the seed word.
 
 ## Required Output Artifacts
-- `.cospec/workflow/test-gather-input/manifest.json`
-- `.cospec/workflow/test-gather-input/results.md`
+- `.cospec/runs/<RUN_DIR>/test-gather-input/manifest.json`
+- `.cospec/runs/<RUN_DIR>/test-gather-input/results.md`
 ```
 
 ### test-preflight (interactive, root)
@@ -164,8 +169,8 @@ Ask the user whether they want a formal or casual tone. This skill is interactiv
 - After the user answers, writes the tone.
 
 ## Required Output Artifacts
-- `.cospec/workflow/test-preflight/manifest.json`
-- `.cospec/workflow/test-preflight/results.md`
+- `.cospec/runs/<RUN_DIR>/test-preflight/manifest.json`
+- `.cospec/runs/<RUN_DIR>/test-preflight/results.md`
 ```
 
 ### test-explode (parallel)
@@ -183,7 +188,7 @@ Test workflow — expand the seed word into noun phrases.
 test-gather-input
 
 ## Input Artifacts
-- `.cospec/workflow/test-gather-input/manifest.json`
+- `.cospec/runs/<RUN_DIR>/test-gather-input/manifest.json`
 
 ## Task Spec
 Read the seed word from test-gather-input and generate 3 related noun phrases. Non-interactive.
@@ -195,8 +200,8 @@ Read the seed word from test-gather-input and generate 3 related noun phrases. N
 - Each phrase relates to the seed word.
 
 ## Required Output Artifacts
-- `.cospec/workflow/test-explode/manifest.json`
-- `.cospec/workflow/test-explode/results.md`
+- `.cospec/runs/<RUN_DIR>/test-explode/manifest.json`
+- `.cospec/runs/<RUN_DIR>/test-explode/results.md`
 ```
 
 ### test-enrich (parallel)
@@ -211,7 +216,7 @@ Test workflow — expand the seed word into descriptive phrases.
 test-gather-input
 
 ## Input Artifacts
-- `.cospec/workflow/test-gather-input/manifest.json`
+- `.cospec/runs/<RUN_DIR>/test-gather-input/manifest.json`
 
 ## Task Spec
 Read the seed word from test-gather-input and generate 3 related descriptive phrases. Non-interactive.
@@ -223,8 +228,8 @@ Read the seed word from test-gather-input and generate 3 related descriptive phr
 - Each phrase relates to the seed word.
 
 ## Required Output Artifacts
-- `.cospec/workflow/test-enrich/manifest.json`
-- `.cospec/workflow/test-enrich/results.md`
+- `.cospec/runs/<RUN_DIR>/test-enrich/manifest.json`
+- `.cospec/runs/<RUN_DIR>/test-enrich/results.md`
 ```
 
 ### test-merge (terminal, multi-dependency)
@@ -242,9 +247,9 @@ Test workflow — merge all upstream outputs into one paragraph.
 test-explode, test-enrich, test-preflight
 
 ## Input Artifacts
-- `.cospec/workflow/test-explode/manifest.json`
-- `.cospec/workflow/test-enrich/manifest.json`
-- `.cospec/workflow/test-preflight/manifest.json`
+- `.cospec/runs/<RUN_DIR>/test-explode/manifest.json`
+- `.cospec/runs/<RUN_DIR>/test-enrich/manifest.json`
+- `.cospec/runs/<RUN_DIR>/test-preflight/manifest.json`
 
 ## Task Spec
 Read the noun phrases, descriptive phrases, and tone from upstream results. Compose one short paragraph in the requested tone. Non-interactive.
@@ -257,8 +262,8 @@ Read the noun phrases, descriptive phrases, and tone from upstream results. Comp
 - Paragraph respects the chosen tone.
 
 ## Required Output Artifacts
-- `.cospec/workflow/test-merge/manifest.json`
-- `.cospec/workflow/test-merge/results.md`
+- `.cospec/runs/<RUN_DIR>/test-merge/manifest.json`
+- `.cospec/runs/<RUN_DIR>/test-merge/results.md`
 ```
 
 ## Red Flags

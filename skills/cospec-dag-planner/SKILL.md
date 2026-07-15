@@ -9,7 +9,7 @@ description: Use when a workflow entry skill needs to generate a skill-level DAG
 
 其他 skill 通过 `cospec-dag-planner` 引用本 skill。
 
-本 skill 负责把一个 workflow entry skill 要编排的 leaf skills 转换为 cospowers 风格的调度产物：`.cospec/workflow/index.md`、`dag.json`、以及每个 skill-invoker 的 `task card`。
+本 skill 负责把一个 workflow entry skill 要编排的 leaf skills 转换为 cospowers 风格的调度产物：`.cospec/runs/<RUN_DIR>/index.md`、`dag.json`、以及每个 skill-invoker 的 `task card`。
 
 ## When to Use
 
@@ -22,14 +22,14 @@ Caller provides:
 
 1. **workflow_name**: the workflow identifier.
 2. **nodes**: a map of task id → `{skill, depends_on, description}`.
-3. **output_dir**: `.cospec/workflow/`.
+3. **output_dir**: `.cospec/runs/<RUN_DIR>/`.
 
 ## Output Contract
 
 This skill writes:
 
 ```text
-.cospec/workflow/
+.cospec/runs/<RUN_DIR>/
   index.md              # human-readable workflow overview
   dag.json              # machine-readable skill DAG
   tasks/<task-id>.md    # per-skill task card
@@ -44,8 +44,8 @@ This skill writes:
 **Goal:** [one sentence]
 
 ## Scheduling artifacts
-- DAG: `.cospec/workflow/dag.json`
-- Task cards: `.cospec/workflow/tasks/`
+- DAG: `.cospec/runs/<RUN_DIR>/dag.json`
+- Task cards: `.cospec/runs/<RUN_DIR>/tasks/`
 
 ## Task DAG
 
@@ -59,9 +59,9 @@ graph TD
 
 ### [task-id]
 **Skill:** [skill-name]
-**Task card:** `.cospec/workflow/tasks/[task-id].md`
+**Task card:** `.cospec/runs/<RUN_DIR>/tasks/[task-id].md`
 **Depends on:** [deps or "(none)"]
-**Produces manifest:** `.cospec/workflow/[task-id]/manifest.json`
+**Produces manifest:** `.cospec/runs/<RUN_DIR>/[task-id]/manifest.json`
 ```
 
 ### `dag.json` schema
@@ -69,13 +69,13 @@ graph TD
 ```json
 {
   "workflow": "<workflow_name>",
-  "plan_file": ".cospec/workflow/index.md",
+  "plan_file": ".cospec/runs/<RUN_DIR>/index.md",
   "tasks": [
     {
       "id": "requirement-clarification",
-      "task_file": ".cospec/workflow/tasks/requirement-clarification.md",
+      "task_file": ".cospec/runs/<RUN_DIR>/tasks/requirement-clarification.md",
       "depends_on": [],
-      "produces": [".cospec/workflow/requirement-clarification/manifest.json"]
+      "produces": [".cospec/runs/<RUN_DIR>/requirement-clarification/manifest.json"]
     }
   ]
 }
@@ -112,8 +112,8 @@ Each task must contain: `id`, `task_file`, `depends_on`, `produces`.
 - Consistent with upstream manifest contracts.
 
 ## Required Output Artifacts
-- `.cospec/workflow/<task-id>/manifest.json`
-- `.cospec/workflow/<task-id>/results.md`
+- `.cospec/runs/<RUN_DIR>/<task-id>/manifest.json`
+- `.cospec/runs/<RUN_DIR>/<task-id>/results.md`
 ```
 
 ## Workflow
