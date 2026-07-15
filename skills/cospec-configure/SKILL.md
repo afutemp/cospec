@@ -51,10 +51,10 @@ After reading the config, output:
 ⬜ 使用内置默认:
   templates (user-requirement, user-journey, tr1-large-review, tr1-large-ai, tr1-small-review)
   rules (requirement-checklists)
-  evaluators (requirement-clarification, user-journey-design, tr1-requirements-spec)
+  evaluators (product-planning-requirement-clarification, user-journey-design, tr1-requirements-spec)
   kb (localPath: doc/kb/)
   env (DAEDALUS_URL, DAEDALUS_API_KEY)
-  workflow (default: product-planning-workflow)
+  workflow (default: large-requirement-workflow)
 
 要配置哪个类别？
   1. project      — 项目信息（产品名称）
@@ -132,8 +132,8 @@ After user provides a path: use `Bash` to verify the directory exists. If not fo
 
 For each evaluator key, ask:
 
-**requirement-clarification**
-> "需求澄清阶段后是否启用质量门？输入自定义 evaluator skill 名称，输入 `false` 禁用，或跳过使用默认：`requirement-clarification-evaluator`。"
+**product-planning-requirement-clarification**
+> "需求澄清阶段后是否启用质量门？输入自定义 evaluator skill 名称，输入 `false` 禁用，或跳过使用默认：`product-planning-requirement-clarification-evaluator`。"
 
 **user-journey-design**
 > "用户旅程设计阶段后是否启用质量门？输入自定义 evaluator skill 名称，输入 `false` 禁用，或跳过使用默认：`user-journey-design-evaluator`。"
@@ -148,7 +148,7 @@ Validation: string values must not be empty; `false` is valid; skip is valid.
 ### `workflow` — 默认 workflow entry skill
 
 **default**
-> "默认的 workflow entry skill 是什么？输入 skill 名称，或跳过使用默认：`product-planning-workflow`。当 `brainstorming` 无法判断用户意图时会回退到该默认值。"
+> "默认的 workflow entry skill 是什么？输入 skill 名称（`large-requirement-workflow` 或 `small-requirement-workflow`），或跳过使用默认：`large-requirement-workflow`。当 `brainstorming` 无法判断用户意图时会回退到该默认值。"
 
 Validation: non-empty string.
 
@@ -187,7 +187,7 @@ Before writing, display what will be changed:
   templates.user-requirement:   null → "my-templates/tr1.md"  ✅ 文件已验证
   rules.requirement-checklists: null → "my-rules/checklists/"  ✅ 目录已验证
   evaluators.tr1-requirements-spec: null → false  ⚠️ 将禁用 TR1 质量门控
-  workflow.default:             null → "product-planning-workflow"
+  workflow.default:             null → "large-requirement-workflow"
 
 是否确认写入？(y/n)
 ```
@@ -229,6 +229,6 @@ After writing:
 
 ## Extension Principle
 
-`cospec.config.json` is the **only** supported extension mechanism. Core workflow skills (`brainstorming`, `product-planning-workflow`, `tr1-only-workflow`) enforce their own SOP and cannot be overridden by other plugins or skills. Only the leaf extension points declared in this config (templates, rules, evaluators, kb, env, workflow default) are replaceable.
+`cospec.config.json` is the **only** supported extension mechanism. Core workflow skills (`brainstorming`, `large-requirement-workflow`, `small-requirement-workflow`) enforce their own SOP and cannot be overridden by other plugins or skills. Only the leaf extension points declared in this config (templates, rules, evaluators, kb, env, workflow default) are replaceable.
 
 Workflow topology itself is defined in the workflow entry skill prompts, not in config.

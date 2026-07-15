@@ -1,7 +1,7 @@
 {
   "_comment": "cospec plugin configuration. Run 'cospec-configure' skill to replace any value with your own path, skill name, or credential.",
   "_version": "3.0.0",
-  "_updated": "2026-07-14",
+  "_updated": "2026-07-15",
 
   "project": {
     "_comment": "Project metadata. 'product' identifies the product line (e.g., SCC, SCP, DMP).",
@@ -36,13 +36,13 @@
 
   "evaluators": {
     "_comment": "Quality gate evaluator skills. Replace with your own skill name, or set to false to disable the gate entirely.",
-    "requirement-clarification": "requirement-clarification-evaluator",
+    "product-planning-requirement-clarification": "product-planning-requirement-clarification-evaluator",
     "user-journey-design": "user-journey-design-evaluator",
     "tr1-requirements-spec": "tr1-requirements-spec-evaluator"
   },
 
   "workflow": {
     "_comment": "Default workflow entry skill used by brainstorming when no more specific workflow is selected.",
-    "default": "product-planning-workflow"
+    "default": "large-requirement-workflow"
   }
 }

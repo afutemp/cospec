@@ -26,4 +26,4 @@
 ## Skill 优先级
 
 1. **流程型 skill 优先**（brainstorming）—— 决定如何做
-2. **领域 skill 其次**（requirement-clarification, user-journey-design, tr1-requirements-spec）—— 指导执行
+2. **领域 skill 其次**（product-planning-requirement-clarification, user-journey-design, tr1-requirements-spec）—— 指导执行

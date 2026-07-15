@@ -56,7 +56,7 @@ Replace entire cospec rules directories with your own.
 
 | Key | Default | Used By |
 |---|---|---|
-| `requirement-checklists` | `rules/requirement-checklists/` | `requirement-clarification`, `user-journey-design`, `tr1-requirements-spec` |
+| `requirement-checklists` | `rules/requirement-checklists/` | `product-planning-requirement-clarification`, `user-journey-design`, `tr1-requirements-spec` |
 
 ## `evaluators`
 
@@ -64,7 +64,7 @@ Replace or disable individual quality gate evaluator skills.
 
 | Key | Default | Gate Location |
 |---|---|---|
-| `requirement-clarification` | `requirement-clarification-evaluator` | After `requirement-clarification` |
+| `product-planning-requirement-clarification` | `product-planning-requirement-clarification-evaluator` | After `product-planning-requirement-clarification` |
 | `user-journey-design` | `user-journey-design-evaluator` | After `user-journey-design` |
 | `tr1-requirements-spec` | `tr1-requirements-spec-evaluator` | After `tr1-requirements-spec` |
 
@@ -76,10 +76,10 @@ Replace or disable individual quality gate evaluator skills.
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `default` | string | `"product-planning-workflow"` | Default workflow entry skill used by `brainstorming` when it cannot determine a more specific workflow. |
+| `default` | string | `"large-requirement-workflow"` | Default workflow entry skill used by `brainstorming` when it cannot determine a more specific workflow. |
 
-Workflow topology itself is defined in the workflow entry skill prompts (`product-planning-workflow`, `tr1-only-workflow`, etc.), not in config.
+Workflow topology itself is defined in the workflow entry skill prompts (`large-requirement-workflow`, `small-requirement-workflow`, etc.), not in config.
 
 ## Extension Principle
 
-`cospec.config.json` is the **only** supported extension mechanism. Core workflow skills (`brainstorming`, `product-planning-workflow`, `tr1-only-workflow`) enforce their own SOP and cannot be overridden by other plugins. Only the leaf extension points declared in this config (templates, rules, evaluators, kb, env, workflow default) are replaceable.
+`cospec.config.json` is the **only** supported extension mechanism. Core workflow skills (`brainstorming`, `large-requirement-workflow`, `small-requirement-workflow`) enforce their own SOP and cannot be overridden by other plugins. Only the leaf extension points declared in this config (templates, rules, evaluators, kb, env, workflow default) are replaceable.

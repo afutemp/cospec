@@ -61,13 +61,13 @@ These thoughts mean STOP—you're rationalizing:
 When multiple skills could apply, use this order:
 
 1. **Process skills first** (brainstorming) - determines HOW to approach the task
-2. **Domain skills second** (requirement-clarification, user-journey-design, tr1-requirements-spec) - guide execution
+2. **Domain skills second** (product-planning-requirement-clarification, user-journey-design, tr1-requirements-spec) - guide execution
 
 "Help me plan this product requirement" -> brainstorming first, then domain skills.
 
 ## Skill Types
 
-**Rigid** (requirement-clarification, user-journey-design): Follow exactly. Don't adapt away discipline.
+**Rigid** (product-planning-requirement-clarification, user-journey-design): Follow exactly. Don't adapt away discipline.
 
 **Flexible** (tr1-requirements-spec): Adapt principles to context.
 

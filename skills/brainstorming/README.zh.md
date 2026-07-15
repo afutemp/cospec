@@ -12,13 +12,16 @@
 
 阶段判断和路由确认完成之前，**禁止调用任何下游 skill 或产出正式文档**。
 
-### 一条主链，按节点进入
+### 两条工作流，按需求规模进入
 
 ```
-原始想法 → requirement-clarification → user-journey-design → tr1-requirements-spec
+brainstorming → { large-requirement-workflow | small-requirement-workflow }
 ```
 
-brainstorming 判断用户从哪个节点进入，不需要从头走到尾。如果用户已有旅程文档，可以直接进入 TR1 生成。
+- **大需求** → `large-requirement-workflow`：含共创/客户/竞品研究 + TR2 的完整管线。
+- **小需求** → `small-requirement-workflow`：精简管线，到 TR1 即止。
+
+brainstorming 只做路由；各工作流的内部步骤（澄清/研究/旅程/TR1/TR2 的编排与并发）由其自身 SKILL.md 定义。
 
 ## 检查清单
 
@@ -34,9 +37,9 @@ brainstorming 判断用户从哪个节点进入，不需要从头走到尾。如
 
 | 用户状态 | 路由 |
 |---------|------|
-| 原始想法 / "想全面" | → `requirement-clarification` |
-| 已有清晰需求，无旅程 | → `user-journey-design` |
-| 已有旅程 / 结构化需求 / 直出 TR1 | → `tr1-requirements-spec` |
+| 大需求：需要共创/客户/竞品研究，或要 TR2 产物；范围大、"想全面" | → `large-requirement-workflow` |
+| 小需求：范围聚焦、无需研究/竞品、到 TR1 即止 | → `small-requirement-workflow` |
+| 无法判断 | → `large-requirement-workflow`（默认） |
 
 ## 核心原则
 

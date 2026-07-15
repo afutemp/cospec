@@ -51,7 +51,7 @@ This skill writes:
 
 ```mermaid
 graph TD
-    A[requirement-clarification] --> B[user-journey-design]
+    A[product-planning-requirement-clarification] --> B[user-journey-design]
     B --> C[tr1-requirements-spec]
 ```
 
@@ -72,10 +72,10 @@ graph TD
   "plan_file": ".cospec/runs/<RUN_DIR>/index.md",
   "tasks": [
     {
-      "id": "requirement-clarification",
-      "task_file": ".cospec/runs/<RUN_DIR>/tasks/requirement-clarification.md",
+      "id": "product-planning-requirement-clarification",
+      "task_file": ".cospec/runs/<RUN_DIR>/tasks/product-planning-requirement-clarification.md",
       "depends_on": [],
-      "produces": [".cospec/runs/<RUN_DIR>/requirement-clarification/manifest.json"]
+      "produces": [".cospec/runs/<RUN_DIR>/product-planning-requirement-clarification/manifest.json"]
     }
   ]
 }

@@ -1,28 +1,32 @@
 # cospec Plugin
 
-适用于 Claude Code 及兼容 AI Agent 的 AI 原生产品规划工作流插件。以 `brainstorming` 为唯一入口，一条主链串联需求澄清、用户旅程设计与 TR1 需求说明书生成。
+适用于 Claude Code 及兼容 AI Agent 的 AI 原生产品规划工作流插件。以 `brainstorming` 为唯一入口，按需求规模路由到**大需求**或**小需求**两条工作流，串联需求澄清、共创/客户/竞品研究、用户旅程设计、TR1 需求说明书；大需求进一步产出 TR2（EPIC/Feature/Story/Tech）。
 
 ## 工作流路由
 
-一条主链，按节点进入：
+`brainstorming` 按需求规模路由到 workflow entry skill，再由其调用 `cospec-dag-executor` 并行调度 leaf skills：
 
 ```
-用户意图 ──→ brainstorming ──→ requirement-clarification ──→ user-journey-design ──→ tr1-requirements-spec
+用户意图 ──→ brainstorming ──→ { large-requirement-workflow | small-requirement-workflow } ──→ cospec-dag-executor ──→ leaf skills
 ```
 
-| 用户状态 | 进入节点 | 说明 |
-|---------|---------|------|
-| 原始想法、口头需求、"想全面" | → `requirement-clarification` | 从链头开始，走完整流程 |
-| 已有清晰需求方向，无旅程设计 | → `user-journey-design` | 跳过澄清，从旅程开始 |
-| 已有旅程文档 / 结构化需求 / 直出 TR1 | → `tr1-requirements-spec` | 跳过前两阶段，直出 TR1 |
+| 用户状态 | 路由 | 说明 |
+|---------|------|------|
+| 大需求：需要共创/客户/竞品研究，或要 TR2 产物；范围大、"想全面" | → `large-requirement-workflow` | 澄清 → 研究（5 并发）→ 旅程 → TR1 → TR2 |
+| 小需求：范围聚焦、无需研究/竞品、到 TR1 即止 | → `small-requirement-workflow` | 澄清 → 旅程 → TR1 |
+| 无法判断 | → `large-requirement-workflow` | 默认大需求管线 |
 
 ## 流水线阶段明细
 
-| # | 阶段 | 入口 | 核心产物 | 结束标识 |
-|---|------|------|----------|----------|
-| 1 | **需求澄清** | `requirement-clarification` | 需求背景澄清交付物（需求概述、全景结论、异常边界与风险、下游影响、事实/假设/待确认、3-5 条核心共识） | 用户确认澄清结果充分 |
-| 2 | **用户旅程设计** | `user-journey-design` | 用户旅程设计文档（需求背景、方案设计、未来旅程、目标达成分析） | 用户确认 Step 0/1/2/3 全部通过 |
-| 3 | **TR1 需求说明书** | `tr1-requirements-spec` | TR1 用户需求说明书（大需求评审版 + AI 上下文版 / 小需求评审版） | 用户确认文档内容 |
+大需求工作流为完整 5 阶段；小需求工作流仅含阶段 1、3、4（无研究、无 TR2）。
+
+| # | 阶段 | Skill | 核心产物 |
+|---|------|------|----------|
+| 1 | **需求澄清** | `product-planning-requirement-clarification` | 需求背景澄清交付物（需求概述、全景结论、异常边界与风险、下游影响、事实/假设/待确认、3-5 条核心共识） |
+| 2 | **研究/分析**（仅大需求，5 个必选并发） | `co-create-customer-minutes-analysis` / `customer-experience-feedback-analysis-v2` / `competitor-feature-research` / `competitor-pain-points` / `competitor-problem-solving` | 共创验证报告 / 客户体验反馈报告 / 竞品分析报告 |
+| 3 | **用户旅程设计** | `user-journey-design` | 用户旅程设计文档（需求背景、方案设计、未来旅程、目标达成分析） |
+| 4 | **TR1 需求说明书** | `tr1-requirements-spec` | TR1 用户需求说明书（大需求评审版 + AI 上下文版 / 小需求评审版） |
+| 5 | **TR2 产物**（仅大需求） | `tr2-epic-creator` / `tr2-feature-creator` / `tr2-story-creator` / `tr2-tech-creator` | EPIC / Feature / Story / Tech 需求文档（可追溯至 TR1 AI 上下文版） |
 
 ## 安装
 
@@ -74,11 +78,20 @@
 | `using-spec-developer` | 入口点：指导如何使用 skill |
 | `session-context` | 跨 compact/重启的会话状态持久化 |
 | `brainstorming` | 中央路由器：评估规划阶段，选择 workflow entry skill |
-| `product-planning-workflow` | 默认工作流编排器：编排完整产品规划管线 |
-| `tr1-only-workflow` | 直出 TR1 工作流编排器 |
-| `requirement-clarification` | 需求澄清：原始想法 → "想全面"的澄清结果 |
-| `user-journey-design` | 用户旅程设计：4 阶段状态机确认流程 |
+| `large-requirement-workflow` | 大需求工作流编排器：澄清 → 研究 → 旅程 → TR1 → TR2 |
+| `small-requirement-workflow` | 小需求工作流编排器：澄清 → 旅程 → TR1 |
+| `product-planning-requirement-clarification` | 需求澄清：原始想法 → "想全面"的澄清结果 |
+| `co-create-customer-minutes-analysis` | 共创客户纪要分析（验证报告） |
+| `customer-experience-feedback-analysis-v2` | 客户使用体验反馈分析 |
+| `competitor-feature-research` | 资料收集型竞品分析 |
+| `competitor-pain-points` | 痛点收集型竞品分析 |
+| `competitor-problem-solving` | 问题求解型竞品分析 |
+| `user-journey-design` | 用户旅程设计：分阶段状态机确认流程 |
 | `tr1-requirements-spec` | TR1 用户需求说明书生成（大/小需求，评审版 + AI 上下文版） |
+| `tr2-epic-creator` | TR2 EPIC 生成 |
+| `tr2-feature-creator` | TR2 Feature 生成 |
+| `tr2-story-creator` | TR2 Story 生成 |
+| `tr2-tech-creator` | TR2 Tech 需求生成 |
 | `cospec-configure` | 交互式配置：设置 project info、模板、默认 workflow 等 |
 | `writing-skills` | 编写/修改/验证 skill 的元 skill |
 | `cospec-dag-planner` | DAG 计划生成：为 workflow entry skill 生成 `dag.json` 和 task cards |

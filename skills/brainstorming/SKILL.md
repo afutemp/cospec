@@ -40,17 +40,18 @@ brainstorming 是所有产品规划工作的唯一入口，承担单一职责：
 
 | 用户输入特征 | 推荐 Workflow Entry Skill | 说明 |
 |-------------|--------------------------|------|
-| 原始想法、口头需求、需求不清晰、"想全面" | `product-planning-workflow` | 完整流程 |
-| 已有清晰需求方向，但未做旅程设计 | `product-planning-workflow` | 完整流程 |
-| 已有用户旅程文档 / 结构化需求文档 / 直接要写 TR1 | `tr1-only-workflow` | 直出 TR1 |
-| 无法判断 | `product-planning-workflow` | 默认完整流程 |
+| 大需求：需要共创/客户反馈/竞品研究，或要 TR2（EPIC/Feature/Story/Tech）产物 | `large-requirement-workflow` | 完整大需求管线 |
+| 范围较大、涉及多方影响、"想全面" | `large-requirement-workflow` | 完整大需求管线 |
+| 小需求：范围聚焦、无需研究/竞品、到 TR1 即止 | `small-requirement-workflow` | 精简管线（到 TR1 即止） |
+| 无法判断 | `large-requirement-workflow` | 默认大需求管线 |
 
-> 未来可增加 `product-planning-with-competitor-workflow` 等 workflow entry skill；届时在路由表中补充对应条目。
+> 大需求 vs 小需求的判断依据见下方「路由判断依据」。未来可增加更多 workflow entry skill；届时在路由表中补充对应条目。
 
-**路由判断依据**：
-1. 用户意图关键词：澄清相关（"想全面""帮我理清""这个需求靠谱吗"）→ `product-planning-workflow`；文档生成相关（"写 TR1""生成需求说明书"）→ `tr1-only-workflow`。
-2. 已有材料：口头需求、会议记录 → `product-planning-workflow`；已有用户旅程文档或 PRD 草稿 → `tr1-only-workflow`。
-3. 目标产物：用户想要输出什么？（需求澄清稿 / 用户旅程文档 / TR1 需求说明书）
+**路由判断依据**（大需求 vs 小需求）：
+1. 是否需要研究/分析：有共创纪要、客户反馈、竞品材料，或用户明确要做竞品/客户研究 → `large-requirement-workflow`；都没有 → 倾向 `small-requirement-workflow`。
+2. 是否需要 TR2 产物：用户要 EPIC/Feature/Story/Tech → `large-requirement-workflow`；只到 TR1 → `small-requirement-workflow`。
+3. 需求范围与影响面：范围大、涉及多方影响、"想全面" → `large-requirement-workflow`；范围聚焦、影响面小 → `small-requirement-workflow`。
+4. 目标产物：TR1 + TR2 → `large-requirement-workflow`；仅 TR1 → `small-requirement-workflow`。
 
 **向用户确认路由**：
 
@@ -62,30 +63,16 @@ brainstorming 是所有产品规划工作的唯一入口，承担单一职责：
 
 ## 三、流程全景
 
+brainstorming 只负责**路由**——判断需求规模、向用户确认、分发到对应的 workflow entry skill，随后结束。**各 workflow 的具体步骤（澄清/研究/旅程/TR1/TR2 的编排与并发）由其自身 SKILL.md 定义**，brainstorming 不重复维护，避免与下游 workflow 产生耦合。
+
 ```text
 用户意图
     │
     ▼
-brainstorming（Phase 1：共享发现）
+brainstorming（Phase 1：共享发现 → Phase 2：路由确认 → 分发）
     │
-    ▼
-选择 workflow entry skill
-    │
-    ├─ 完整产品规划 ──→ product-planning-workflow
-    │                       │
-    │                       ▼
-    │               cospec-dag-executor
-    │                       │
-    │                       ▼
-    │       requirement-clarification → user-journey-design → tr1-requirements-spec
-    │
-    └─ 直出 TR1 ─────→ tr1-only-workflow
-                            │
-                            ▼
-                    cospec-dag-executor
-                            │
-                            ▼
-                    tr1-requirements-spec
+    ├─ 大需求 ──→ large-requirement-workflow   （内部流程见该 skill 的 SKILL.md）
+    └─ 小需求 ──→ small-requirement-workflow   （内部流程见该 skill 的 SKILL.md）
 ```
 
 ---
