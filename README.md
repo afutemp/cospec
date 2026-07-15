@@ -76,7 +76,6 @@
 | Skill | 职责 |
 |-------|------|
 | `using-spec-developer` | 入口点：指导如何使用 skill |
-| `session-context` | 跨 compact/重启的会话状态持久化 |
 | `brainstorming` | 中央路由器：评估规划阶段，选择 workflow entry skill |
 | `large-requirement-workflow` | 大需求工作流编排器：澄清 → 研究 → 旅程 → TR1 → TR2 |
 | `small-requirement-workflow` | 小需求工作流编排器：澄清 → 旅程 → TR1 |

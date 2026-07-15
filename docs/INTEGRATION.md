@@ -40,7 +40,7 @@ brainstorming
 - **Workflow Entry Skill**：编排一组 leaf skills 的入口 skill，例如 `large-requirement-workflow`、`small-requirement-workflow`。它生成 DAG 产物并调用 `cospec-dag-executor`。
 - **Leaf Skill**：实际执行业务步骤的 skill，例如 `product-planning-requirement-clarification`、`user-journey-design`、`tr1-requirements-spec`。
 - **共享 DAG 基础设施**：`cospec-dag-planner`、`cospec-dag-executor`、`cospec-dag-evaluator` 被 workflow entry skills 调用。
-- **元 Skill**：`using-spec-developer`、`session-context`、`cospec-configure`、`writing-skills` 不参与主链业务。
+- **元 Skill**：`using-spec-developer`、`cospec-configure`、`writing-skills` 不参与主链业务。
 
 ---
 

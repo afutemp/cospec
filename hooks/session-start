@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SessionStart hook for cospowers plugin
+# SessionStart hook for cospec plugin
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -30,30 +30,7 @@ escape_for_json() {
 }
 
 escaped=$(escape_for_json "$using_content")
-session_context="<EXTREMELY_IMPORTANT>\nYou have cospec.\n\n**Below is the full content of your 'cospowers:using-spec-developer' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\n\n${escaped}\n\n</EXTREMELY_IMPORTANT>"
-
-# session-context awareness
-active_files=""
-for candidate_dir in ".claude/session-context" ".codex/session-context" ".opencode/session-context" ".openclaw/session-context"; do
-  if [ -d "$candidate_dir" ]; then
-    found=$(ls "$candidate_dir"/active-*.md 2>/dev/null) || true
-    if [ -n "$found" ]; then
-      active_files="$found"
-      break
-    fi
-  fi
-done
-
-session_context_hint=""
-if [ -n "$active_files" ]; then
-  task_list=""
-  for f in $active_files; do
-    task_name=$(basename "$f" .md | sed 's/^active-//')
-    updated=$(head -5 "$f" | grep -o '[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}' | head -1) || true
-    task_list="${task_list}\\n  - ${task_name} (${updated})"
-  done
-  session_context_hint="\\n---\\n📋 **活跃任务上下文:**${task_list}\\n\\n<MANDATORY>你必须立刻使用 Skill 工具调用 session-context，执行完整盘点流程（枚举目录 → 读所有 active-*.md → 输出清单 → 决策恢复/新任务）后再响应用户。禁止在盘点完成前回复用户或执行任何其他操作。</MANDATORY>\\n---"
-fi
+session_context="<EXTREMELY_IMPORTANT>\nYou have cospec.\n\n**Below is the full content of your 'cospec:using-spec-developer' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\n\n${escaped}\n\n</EXTREMELY_IMPORTANT>"
 
 memory_hint=""
 if [ -d "memory" ]; then
@@ -65,7 +42,7 @@ if [ -d "memory" ]; then
   fi
 fi
 
-session_context="${session_context}${session_context_hint}${memory_hint}"
+session_context="${session_context}${memory_hint}"
 
 # Output context injection as JSON
 if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then

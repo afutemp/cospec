@@ -9,7 +9,7 @@ description: Use when a workflow entry skill needs to generate a skill-level DAG
 
 其他 skill 通过 `cospec-dag-planner` 引用本 skill。
 
-本 skill 负责把一个 workflow entry skill 要编排的 leaf skills 转换为 cospowers 风格的调度产物：`.cospec/runs/<RUN_DIR>/index.md`、`dag.json`、以及每个 skill-invoker 的 `task card`。
+本 skill 负责把一个 workflow entry skill 要编排的 leaf skills 转换为 cospec 风格的调度产物：`.cospec/runs/<RUN_DIR>/index.md`、`dag.json`、以及每个 skill-invoker 的 `task card`。
 
 ## When to Use
 
