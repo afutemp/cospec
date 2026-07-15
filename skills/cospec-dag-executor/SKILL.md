@@ -89,7 +89,7 @@ The executor and its subagents write:
 6. Read returned manifests.
 7. For each `NEEDS_CONTEXT`, extract **all** of its questions (a single `NEEDS_CONTEXT` may carry several independent questions) and add them to the question queue as one group.
 8. If the queue has a question and no question is currently active, ask the user.
-9. When **all** questions in a `NEEDS_CONTEXT` group have been answered, re-dispatch the corresponding `skill-invoker` subagent **once** with the full answer set. Do not re-dispatch per question.
+9. When **all** questions in a `NEEDS_CONTEXT` group have been answered, **dispatch a fresh foreground `skill-invoker` subagent once** with the full answer set, and point it at the task's own `.cospec/runs/<RUN_DIR>/<task-id>/results.md` so it can resume any partial output the previous subagent left there. Do not re-dispatch per question; do **not** use `SendMessage` or any host-platform mechanism to resume a previously completed subagent.
 10. Repeat ready-set computation until all tasks are `DONE`, `FAILED`, or `BLOCKED`.
 11. Record `T_FIRST_COMPLETE` in `.cospec/runs/<RUN_DIR>/execution/time-stats.log`.
 12. Return final summary.
@@ -117,7 +117,7 @@ Never use the host platform's background/async subagent mode (e.g. Claude Code's
 1. Only the main agent may ask the user questions.
 2. When a subagent returns `NEEDS_CONTEXT`, add **all of its questions** to the queue as one group (a single `NEEDS_CONTEXT` may carry several independent questions — see the skill-invoker contract).
 3. At most one question is presented to the user at a time.
-4. Accumulate answers for the questions in a `NEEDS_CONTEXT` group. After the user has answered **every** question in that group, re-dispatch the corresponding subagent **once** with the full answer set — not once per question.
+4. Accumulate answers for the questions in a `NEEDS_CONTEXT` group. After the user has answered **every** question in that group, **dispatch a fresh foreground `skill-invoker` subagent** for that `task_id` **once** with the full answer set — not once per question, and not by sending a message to the previous subagent.
 5. Because dispatch is foreground-parallel with barrier semantics, when a batch returns, several tasks may report `NEEDS_CONTEXT` at once — enqueue all of them (each possibly carrying several questions), then serve them one question at a time. Tasks that returned `DONE` in the same batch are already complete; their downstream may become ready in the next round.
 6. If the queue holds multiple questions, serve them in the order the corresponding `NEEDS_CONTEXT` groups were enqueued; within a group, serve in the order the subagent listed them.
 
@@ -136,7 +136,7 @@ queue entry = {
 - **Enqueue:** one entry per `NEEDS_CONTEXT`, stamped with the returning task's `task_id`; copy `pending_questions` into `questions`; `answers` starts empty (rule 2).
 - **Serve:** the entry with unanswered questions, in enqueue order; within it, ask the next unanswered question (rules 3, 6).
 - **Accumulate:** write the reply into **this entry's** `answers` keyed by its question — never into another entry, even one whose question looks related.
-- **Re-dispatch:** once `answers` covers every `questions` item, re-dispatch the subagent for **that `task_id` once** with the full `answers`, then drop the entry (rule 4). Never re-dispatch per question, and never route one entry's answers to a different task.
+- **Re-dispatch:** once `answers` covers every `questions` item, **dispatch a fresh foreground `skill-invoker` subagent** for **that `task_id` once** with the full `answers`, then drop the entry (rule 4). Never re-dispatch per question, never route one entry's answers to a different task, and never resume the previous subagent with `SendMessage` or any host-platform background mechanism.
 
 ## skill-invoker Subagent
 
@@ -147,6 +147,7 @@ Dispatch with artifact paths only:
 - Task card: `.cospec/runs/<RUN_DIR>/tasks/<task-id>.md`
 - Upstream manifests:
   - `.cospec/runs/<RUN_DIR>/<upstream-id>/manifest.json`
+- On re-dispatch after `NEEDS_CONTEXT` (resume): the task's own `.cospec/runs/<RUN_DIR>/<task-id>/results.md`, where the previous subagent may have appended partial output to resume from.
 ```
 
 Required behavior:
@@ -194,7 +195,7 @@ When `status == NEEDS_CONTEXT`, `pending_questions` is a **non-empty** list of i
 
 **DONE:** Read the manifest path; downstream tasks may become ready.  
 **DONE_WITH_CONCERNS:** Treat as `DONE` for scheduling, but record concerns in the final summary.  
-**NEEDS_CONTEXT:** Add its questions to the queue as one group. Serve them to the user one at a time; after all are answered, re-dispatch the subagent **once** with the full answer set. Do not dispatch downstream tasks until resolved.  
+**NEEDS_CONTEXT:** Add its questions to the queue as one group. Serve them to the user one at a time; after all are answered, **dispatch a fresh foreground `skill-invoker` subagent** with the full answer set. Do not dispatch downstream tasks until resolved. Do not poll `manifest.json` to wait for subagent completion — foreground dispatch returns naturally when the subagent finishes.  
 **BLOCKED:** Stop downstream dispatch. Provide context or escalate to user.  
 **FAILED:** Dispatch fixer subagent using artifact paths. Escalate after 3 rounds.
 
@@ -222,6 +223,8 @@ echo "T_FIRST_COMPLETE: $(date '+%Y-%m-%d %H:%M:%S')" >> .cospec/runs/<RUN_DIR>/
 
 - Do NOT execute leaf skills in the main agent.
 - Do NOT dispatch a subagent in the host platform's background/async mode (e.g. Claude Code's `run_in_background`). Every subagent runs foreground; wait for the batch barrier.
+- Do NOT use `SendMessage` or any host-platform mechanism to resume a completed subagent; always dispatch a fresh subagent for the next round.
+- Do NOT poll `manifest.json` or any artifact to wait for a subagent to finish — foreground dispatch returns naturally.
 - Do NOT mix foreground and background dispatch within a workflow — use a single foreground batch for every ready set.
 - Do NOT dispatch dependent tasks before upstream manifests are `DONE` and `ready_for_downstream=true`.
 - Do NOT paste full skill output into subagent prompts.
