@@ -52,7 +52,7 @@ Caller (the workflow entry skill) provides the run directory path. From there th
 RUN_DIR="runs/$(date '+%y-%m-%d-%H%M%S')-<workflow-name>"
 ```
 
-Example: `.cospec/runs/26-07-15-103045-test-dag-workflow/`
+Example: `.cospec/runs/26-07-15-103045-large-requirement-workflow/`
 
 The workflow entry skill generates `RUN_DIR` once, writes all artifacts (`dag.json`, `index.md`, `tasks/`) under `.cospec/$RUN_DIR/`, and passes `.cospec/$RUN_DIR/` to this executor. The executor itself never generates `RUN_DIR` — it only reads the directory it is given.
 
