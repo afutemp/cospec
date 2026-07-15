@@ -30,7 +30,7 @@ escape_for_json() {
 }
 
 escaped=$(escape_for_json "$using_content")
-session_context="<EXTREMELY_IMPORTANT>\nYou have cospowers.\n\n**Below is the full content of your 'cospowers:using-spec-developer' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\n\n${escaped}\n\n</EXTREMELY_IMPORTANT>"
+session_context="<EXTREMELY_IMPORTANT>\nYou have cospec.\n\n**Below is the full content of your 'cospowers:using-spec-developer' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\n\n${escaped}\n\n</EXTREMELY_IMPORTANT>"
 
 # session-context awareness
 active_files=""
