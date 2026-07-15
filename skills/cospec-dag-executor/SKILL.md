@@ -23,7 +23,7 @@ The main agent in this skill only:
 
 1. Reads plan index, `dag.json`, task card paths, manifests, review status, and blocker reasons.
 2. Computes the current ready set from DAG dependencies and manifest status.
-3. Dispatches all independent ready tasks in the same scheduling batch.
+3. Dispatches all independent ready tasks **in a single batch** (one subagent per ready task, all at once), then waits for the entire batch to return before acting again (barrier semantics, intentional — see Scheduling Model below). Never uses the host platform's background/async dispatch mode (e.g. Claude Code's `run_in_background`).
 4. Collects `NEEDS_CONTEXT` responses into a question queue.
 5. Asks the user one question at a time and routes answers back to the corresponding subagent.
 6. Updates task state and escalates blockers after retry limits.
@@ -31,6 +31,7 @@ The main agent in this skill only:
 The main agent must not:
 
 - Execute leaf skills directly.
+- **Dispatch a subagent in the host platform's background/async mode (e.g. Claude Code's `run_in_background`). Every subagent runs foreground; wait for the whole batch to return.**
 - Paste full plan/task/results text into subagent prompts.
 - Ask the user more than one question at a time.
 - Decide skill correctness directly; subagents and the invoked skills own that judgment.
@@ -93,10 +94,20 @@ The executor and its subagents write:
 11. Record `T_FIRST_COMPLETE` in `.cospec/runs/<RUN_DIR>/execution/time-stats.log`.
 12. Return final summary.
 
+## Scheduling Model (read first)
+
+This executor uses **batch + barrier** scheduling on every host platform (Claude Code, Codex, Cursor):
+
+- Each ready set is dispatched as **one batch** — all subagents started together.
+- The main agent then **waits for the entire batch to return** before it reasons again.
+- This is deliberate: it makes the `NEEDS_CONTEXT` question queue well-defined (a batch may surface several questions at once → enqueue all, serve one at a time).
+
+Never use the host platform's background/async subagent mode (e.g. Claude Code's `run_in_background`, or any "fire-and-forget" dispatch). Background dispatch breaks the barrier assumption, makes scheduling non-deterministic, and is not portable (Codex/Cursor have no equivalent subagent-level background mode anyway). On Codex/Cursor the default subagent behavior is already batch+barrier, so this rule just reinforces the platform default.
+
 ## DAG Ready-Set Scheduling
 
 1. A task is ready when every dependency manifest has `status == DONE` and `ready_for_downstream == true`.
-2. All tasks in the same ready set must be dispatched in the same scheduling batch when their deliverables do not overlap and no task declares `exclusive: true`.
+2. All tasks in the same ready set are dispatched together in a single batch (one subagent per ready task). Wait for the whole batch to return before computing the next ready set.
 3. Dependent tasks must not run before upstream manifests are `DONE` and ready.
 4. If a ready set is empty while unfinished tasks remain, inspect only manifest statuses and blocking reasons, then dispatch fixer/normalizer subagents or escalate to the user.
 5. Respect `max_parallel_tasks` from the caller's workflow config as the upper bound for a single batch.
@@ -107,7 +118,7 @@ The executor and its subagents write:
 2. When a subagent returns `NEEDS_CONTEXT`, add its question to the queue.
 3. At most one question is presented to the user at a time.
 4. After the user answers, route the answer to the corresponding subagent and re-dispatch it.
-5. Other running subagents continue in the background; they are not blocked unless they also return `NEEDS_CONTEXT`.
+5. Because dispatch is foreground-parallel with barrier semantics, when a batch returns, several tasks may report `NEEDS_CONTEXT` at once — enqueue all of them, then serve them one at a time. Tasks that returned `DONE` in the same batch are already complete; their downstream may become ready in the next round.
 6. If the queue has multiple questions, process them in the order the corresponding tasks became ready.
 
 ## skill-invoker Subagent
@@ -191,6 +202,8 @@ echo "T_FIRST_COMPLETE: $(date '+%Y-%m-%d %H:%M:%S')" >> .cospec/runs/<RUN_DIR>/
 ## Red Flags
 
 - Do NOT execute leaf skills in the main agent.
+- Do NOT dispatch a subagent in the host platform's background/async mode (e.g. Claude Code's `run_in_background`). Every subagent runs foreground; wait for the batch barrier.
+- Do NOT mix foreground and background dispatch within a workflow — use a single foreground batch for every ready set.
 - Do NOT dispatch dependent tasks before upstream manifests are `DONE` and `ready_for_downstream=true`.
 - Do NOT paste full skill output into subagent prompts.
 - Do NOT ask the user more than one question at a time.
