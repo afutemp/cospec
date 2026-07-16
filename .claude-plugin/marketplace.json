@@ -1,8 +1,10 @@
 {
   "name": "cospec-marketplace",
-  "description": "cospec multi-plugin archive",
   "owner": {
     "name": "afutemp"
+  },
+  "metadata": {
+    "description": "cospec multi-plugin archive"
   },
   "plugins": [
     {
@@ -10,6 +12,15 @@
       "description": "AI 原生产品规划工作流：需求澄清、用户旅程设计、TR1 用户需求说明书生成，支持 DAG 并行文档生成扩展",
       "version": "3.0.0",
       "source": "./plugins/cospec",
+      "author": {
+        "name": "afutemp"
+      }
+    },
+    {
+      "name": "product-kb",
+      "description": "Claude Code plugin for reusable knowledge-base skills",
+      "version": "0.1.0",
+      "source": "./plugins/product-kb",
       "author": {
         "name": "afutemp"
       }

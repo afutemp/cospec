@@ -1,0 +1,36 @@
+{
+  "name": "product-kb",
+  "version": "0.1.0+codex.20260716084529",
+  "description": "\u9762\u5411\u4ea7\u54c1\u89c4\u5212\u7684\u53ef\u8ffd\u6eaf\u77e5\u8bc6\u5e93\u5de5\u4f5c\u6d41\uff1a\u4ece\u5343\u6d41 IPD \u751f\u6210\u3001\u66f4\u65b0\u3001\u8bc4\u4f30\u3001\u4f18\u5316\u5e76\u67e5\u8be2\u4ea7\u54c1\u89c4\u5212\u77e5\u8bc6\u5e93",
+  "author": {
+    "name": "afutemp",
+    "url": "https://github.com/afutemp"
+  },
+  "homepage": "https://github.com/afutemp/cospec",
+  "repository": "https://github.com/afutemp/cospec.git",
+  "keywords": [
+    "product-planning",
+    "knowledge-base",
+    "ipd",
+    "requirements",
+    "traceability"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Product KB",
+    "shortDescription": "\u53ef\u8ffd\u6eaf\u7684\u4ea7\u54c1\u89c4\u5212\u77e5\u8bc6\u5e93\u5de5\u4f5c\u6d41",
+    "longDescription": "Product KB \u4ece\u5343\u6d41 IPD \u91c7\u96c6\u9700\u6c42\u548c\u9644\u4ef6\u8bc1\u636e\uff0c\u751f\u6210\u53ef\u8ffd\u6eaf\u7684\u4ea7\u54c1\u89c4\u5212\u77e5\u8bc6\u5e93\uff0c\u5e76\u652f\u6301\u589e\u91cf\u66f4\u65b0\u3001\u8d28\u91cf\u8bc4\u4f30\u3001\u8bc1\u636e\u5185\u4f18\u5316\u548c\u672c\u5730\u67e5\u8be2\u3002",
+    "developerName": "afutemp",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/afutemp/cospec",
+    "defaultPrompt": [
+      "\u4ece IPD \u9879\u76ee\u751f\u6210\u4ea7\u54c1\u89c4\u5212\u77e5\u8bc6\u5e93",
+      "\u8bc4\u4f30\u5e76\u4f18\u5316\u73b0\u6709\u4ea7\u54c1\u77e5\u8bc6\u5e93",
+      "\u67e5\u8be2\u4ea7\u54c1\u77e5\u8bc6\u5e93\u4e2d\u7684\u7248\u672c\u8303\u56f4\u548c\u89c4\u5212\u98ce\u9669"
+    ]
+  }
+}
