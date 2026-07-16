@@ -2,7 +2,7 @@
   "name": "cospec",
   "displayName": "cospec",
   "description": "AI 原生产品规划工作流：需求澄清、用户旅程设计、TR1 用户需求说明书生成",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": { "name": "afutemp" },
   "license": "MIT",
   "skills": "./skills/",
