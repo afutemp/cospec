@@ -1,7 +1,7 @@
 {
   "name": "product-kb",
-  "version": "0.1.0+codex.20260716084529",
-  "description": "\u9762\u5411\u4ea7\u54c1\u89c4\u5212\u7684\u53ef\u8ffd\u6eaf\u77e5\u8bc6\u5e93\u5de5\u4f5c\u6d41\uff1a\u4ece\u5343\u6d41 IPD \u751f\u6210\u3001\u66f4\u65b0\u3001\u8bc4\u4f30\u3001\u4f18\u5316\u5e76\u67e5\u8be2\u4ea7\u54c1\u89c4\u5212\u77e5\u8bc6\u5e93",
+  "version": "0.1.0",
+  "description": "面向产品规划的可追溯知识库工作流：从千流 IPD 生成、更新、评估、优化并查询产品规划知识库",
   "author": {
     "name": "afutemp",
     "url": "https://github.com/afutemp"
@@ -18,8 +18,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Product KB",
-    "shortDescription": "\u53ef\u8ffd\u6eaf\u7684\u4ea7\u54c1\u89c4\u5212\u77e5\u8bc6\u5e93\u5de5\u4f5c\u6d41",
-    "longDescription": "Product KB \u4ece\u5343\u6d41 IPD \u91c7\u96c6\u9700\u6c42\u548c\u9644\u4ef6\u8bc1\u636e\uff0c\u751f\u6210\u53ef\u8ffd\u6eaf\u7684\u4ea7\u54c1\u89c4\u5212\u77e5\u8bc6\u5e93\uff0c\u5e76\u652f\u6301\u589e\u91cf\u66f4\u65b0\u3001\u8d28\u91cf\u8bc4\u4f30\u3001\u8bc1\u636e\u5185\u4f18\u5316\u548c\u672c\u5730\u67e5\u8be2\u3002",
+    "shortDescription": "可追溯的产品规划知识库工作流",
+    "longDescription": "Product KB 从千流 IPD 采集需求和附件证据，生成可追溯的产品规划知识库，并支持增量更新、质量评估、证据内优化和本地查询。",
     "developerName": "afutemp",
     "category": "Productivity",
     "capabilities": [
@@ -28,9 +28,9 @@
     ],
     "websiteURL": "https://github.com/afutemp/cospec",
     "defaultPrompt": [
-      "\u4ece IPD \u9879\u76ee\u751f\u6210\u4ea7\u54c1\u89c4\u5212\u77e5\u8bc6\u5e93",
-      "\u8bc4\u4f30\u5e76\u4f18\u5316\u73b0\u6709\u4ea7\u54c1\u77e5\u8bc6\u5e93",
-      "\u67e5\u8be2\u4ea7\u54c1\u77e5\u8bc6\u5e93\u4e2d\u7684\u7248\u672c\u8303\u56f4\u548c\u89c4\u5212\u98ce\u9669"
+      "从 IPD 项目生成产品规划知识库",
+      "评估并优化现有产品知识库",
+      "查询产品知识库中的版本范围和规划风险"
     ]
   }
 }

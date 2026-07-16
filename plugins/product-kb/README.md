@@ -1,6 +1,6 @@
 # Product KB
 
-面向产品规划的 Claude Code Plugin。它以千流 IPD 为首个权威数据源，将 Epic、Feature、Story、评论、附件正文和项目生命周期信息转换为可追溯的产品规划知识库，并提供生成、增量更新、质量评估、证据内优化和本地查询能力。
+面向产品规划的 Claude Code / OpenAI Codex Plugin。它以千流 IPD 为首个权威数据源，将 Epic、Feature、Story、评论、附件正文和项目生命周期信息转换为可追溯的产品规划知识库，并提供生成、增量更新、质量评估、证据内优化和本地查询能力。
 
 ## 核心能力
 
@@ -13,7 +13,7 @@
 | `/product-kb:product-kb-optimize` | 根据评估报告预览并应用有 IPD 证据支持的修复 |
 | `/product-kb:product-kb-query` | 查询本地规划文档、元数据和生成时 IPD 快照 |
 
-共享的确定性实现位于 `skills/product-kb-core/`，它不是用户可直接触发的 Skill。
+共享的确定性实现位于 `scripts/product-kb-core/`，它不是用户可直接触发的 Skill。
 
 ## 使用示例
 
@@ -88,6 +88,8 @@ product-kb/
 ```text
 .claude-plugin/
   plugin.json
+.codex-plugin/
+  plugin.json
 skills/
   qianliu-ipd/           # IPD API 查询和管理能力
   product-kb/            # 生命周期总调度
@@ -96,6 +98,7 @@ skills/
   product-kb-eval/
   product-kb-optimize/
   product-kb-query/
+scripts/
   product-kb-core/       # 共享脚本、契约和测试
 templates/
   product-planning-kb/   # 产品规划文档模板
@@ -104,16 +107,30 @@ templates/
 ## 测试与验证
 
 ```bash
-node --test skills/product-kb-core/tests/*.test.js
+node --test scripts/product-kb-core/tests/*.test.js
 claude plugin validate .
+python ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py .
 ```
 
 当前自动化测试覆盖采集、HTML 规范化、附件下载与解析、空文件/不支持格式/下载失败降级、层级树、稳定指纹、真实 IPD 字段兼容、增量差异、受管文件安全、路径与符号链接防护、确定性校验、评估合并、查询及 Skill 路由契约。
 
 ## 本地加载
 
+### Claude Code
+
 ```bash
 claude --plugin-dir .
 ```
 
 加载后 Skills 位于 `product-kb` namespace。
+
+### OpenAI Codex
+
+在仓库根目录执行：
+
+```bash
+codex plugin marketplace add .
+codex plugin add product-kb@cospec-marketplace
+```
+
+安装后新建 Codex 对话，使新增 Skills 生效。

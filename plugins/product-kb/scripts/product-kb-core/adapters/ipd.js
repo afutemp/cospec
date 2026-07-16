@@ -3,7 +3,7 @@
 const path = require('node:path');
 
 function productionApi() {
-  return require(path.join(__dirname, '..', '..', 'qianliu-ipd', 'scripts', 'ipd_api.js'));
+  return require(path.join(__dirname, '..', '..', '..', 'skills', 'qianliu-ipd', 'scripts', 'ipd_api.js'));
 }
 
 function createIpdAdapter({api} = {}) {

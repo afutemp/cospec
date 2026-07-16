@@ -19,7 +19,6 @@
     "skills"
   ],
   "skills": "./skills/",
-  "hooks": "./hooks/hooks.json",
   "interface": {
     "displayName": "cospec",
     "shortDescription": "AI 原生产品规划工作流",

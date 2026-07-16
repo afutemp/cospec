@@ -23,7 +23,7 @@ description: 从千流 IPD 项目/版本/团队/迭代范围或 Epic/Feature 根
 
 ## 阶段 2：采集
 
-调用 `product-kb-core/scripts/collect.js` 写入 `.source/pending-init/`。采集完成后先检查快照 JSON 和 warning。详情/评论/附件的单条 warning 可继续；范围、分页或快照写入 fatal 必须停止。
+调用 `scripts/product-kb-core/scripts/collect.js` 写入 `.source/pending-init/`。采集完成后先检查快照 JSON 和 warning。详情/评论/附件的单条 warning 可继续；范围、分页或快照写入 fatal 必须停止。
 
 ## 阶段 3：从同一快照生成
 
