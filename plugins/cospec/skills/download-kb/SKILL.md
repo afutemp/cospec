@@ -1,7 +1,7 @@
 ---
 name: download-kb
-description: 将预置的知识库下载到当前工作目录。当前支持 `vdi`，会把整理好的 VDC 产品规划知识库复制到 `./vdi-kb/`。
-allowed-tools: Bash Read Glob
+description: 将预置的知识库下载到当前工作目录，并自动配置到 cospec.config.json。当前支持 `vdi`。
+allowed-tools: Bash Read Glob Write
 ---
 
 # Download KB
@@ -45,7 +45,15 @@ allowed-tools: Bash Read Glob
    - 如果目标目录已存在：询问用户是否覆盖，或让用户先删除/重命名旧目录。
    - 如果目标目录不存在：直接复制。
 6. **执行复制**：使用 `Bash cp -r` 将源目录复制到目标路径。
-7. **输出结果**：报告复制成功、目标路径、包含的顶层目录/文件数。
+7. **自动配置 `cospec.config.json`**：
+   1. 在当前工作目录下查找 `cospec.config.json`。
+   2. 如果找不到，再查找 `./plugins/cospec/cospec.config.json`。
+   3. 如果找到，读取并更新：
+      - `kb.skill` 设置为 `"product-kb-query"`（若当前为 `null` 或未设置）。
+      - `kb.localPath` 设置为 `"vdi-kb/"`（相对 config 文件所在目录）。
+   4. 使用 `Write` 或 `Bash` 写回文件。
+   5. 如果找不到 `cospec.config.json`，在输出报告中提示用户手动配置。
+8. **输出结果**：报告复制成功、目标路径、配置结果。
 
 ## Output Contract
 
@@ -54,7 +62,7 @@ allowed-tools: Bash Read Glob
 1. 下载的知识库名称。
 2. 源路径与目标路径。
 3. 目标目录中的顶层文件/文件夹列表（可用 `ls` 或 `tree` 风格展示）。
-4. 后续建议（例如如何配置 `product-kb-query` 使用它）。
+4. `cospec.config.json` 的配置结果（已自动配置 / 未找到 / 已跳过）。
 
 示例输出：
 
@@ -78,7 +86,7 @@ vdi-kb/
 └── 附录/
 ```
 
-后续可配置 `cospec.config.json`：
+✅ 已自动配置 `cospec.config.json`：
 ```json
 "kb": {
   "skill": "product-kb-query",
@@ -92,11 +100,11 @@ vdi-kb/
 - 只复制预置知识库，不修改源目录。
 - 目标目录已存在时不擅自覆盖，先询问用户。
 - 不支持的知识库名称明确告知用户当前仅支持 `vdi`。
-- 复制完成后给出可操作的下一步配置建议。
+- 复制完成后自动配置 `cospec.config.json`；找不到 config 文件时明确提示用户手动配置。
 
 ## Extension Points
 
-本 skill 不读取 `cospec.config.json`，只向当前工作目录写入知识库目录。
+本 skill 读取并更新 `cospec.config.json` 的 `kb` 字段，将其指向下载后的知识库目录。
 
 ## Resources
 
