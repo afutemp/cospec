@@ -46,13 +46,21 @@ allowed-tools: Bash Read Glob Write
    - 如果目标目录不存在：直接复制。
 6. **执行复制**：使用 `Bash cp -r` 将源目录复制到目标路径。
 7. **自动配置 `cospec.config.json`**：
-   1. 在当前工作目录下查找 `cospec.config.json`。
-   2. 如果找不到，再查找 `./plugins/cospec/cospec.config.json`。
-   3. 如果找到，读取并更新：
+   1. 按以下顺序查找 `cospec.config.json`：
+      - `$CLAUDE_PLUGIN_ROOT/cospec.config.json`（插件根目录，最优先）
+      - 当前工作目录下的 `cospec.config.json`
+      - `./plugins/cospec/cospec.config.json`
+   2. 如果找到，读取并更新：
       - `kb.skill` 设置为 `"product-kb-query"`（若当前为 `null` 或未设置）。
-      - `kb.localPath` 设置为 `"vdi-kb/"`（相对 config 文件所在目录）。
-   4. 使用 `Write` 或 `Bash` 写回文件。
-   5. 如果找不到 `cospec.config.json`，在输出报告中提示用户手动配置。
+      - `kb.localPath` 设置为下载后 KB 目录的**绝对路径**（例如 `/home/master/Workspace/yyy/vdi-kb/`），确保无论 config 文件位于 plugin root 还是项目目录都能正确解析。
+   3. 使用 `Write` 或 `Bash` 写回文件。
+   4. 如果找不到 `cospec.config.json`，在输出报告中提示用户手动在 plugin root 创建或配置：
+      ```json
+      "kb": {
+        "skill": "product-kb-query",
+        "localPath": "<absolute-path-to-vdi-kb>"
+      }
+      ```
 8. **输出结果**：报告复制成功、目标路径、配置结果。
 
 ## Output Contract
@@ -86,11 +94,11 @@ vdi-kb/
 └── 附录/
 ```
 
-✅ 已自动配置 `cospec.config.json`：
+✅ 已自动配置 `$CLAUDE_PLUGIN_ROOT/cospec.config.json`：
 ```json
 "kb": {
   "skill": "product-kb-query",
-  "localPath": "vdi-kb/"
+  "localPath": "/home/master/Workspace/yyy/vdi-kb/"
 }
 ```
 ```

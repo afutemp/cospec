@@ -64,7 +64,7 @@ KB_ROOT: product-kb/
 
 1. **解析传入参数**：如果参数以 `KB_ROOT:` 开头，提取该前缀后面的路径作为知识库根目录，剩余部分作为问题。例如 `KB_ROOT: product-kb/\n\n认证方式有哪些？` → 根目录 `product-kb/`，问题 `认证方式有哪些？`。
 2. 如果参数中没有 `KB_ROOT:`，则尝试读取 `<plugin-root>/cospec.config.json`。如果读取失败或文件不存在，直接跳到自动探测。
-3. 如果 `kb.localPath` 已设置且目录存在且包含至少一个 `.md` 文件，则以此为知识库根目录。
+3. 如果 `kb.localPath` 已设置且其指向的目录（绝对路径或相对路径）存在且包含至少一个 `.md` 文件，则以此为知识库根目录。
 4. 如果 `kb.localPath` 为 `null` 或不存在或不包含 `.md` 文件，则在当前工作目录下自动探测以下候选目录：
    - `product-kb/`
    - `kb/`
