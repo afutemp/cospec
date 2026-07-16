@@ -1,15 +1,15 @@
 {
   "name": "cospec-marketplace",
-  "description": "cospec AI 原生产品规划工作流 Plugin",
+  "description": "cospec multi-plugin archive",
   "owner": {
     "name": "afutemp"
   },
   "plugins": [
     {
       "name": "cospec",
-      "description": "AI 原生产品规划工作流：需求澄清、用户旅程设计、TR1 需求说明书生成，支持 DAG 并行文档生成扩展",
+      "description": "AI 原生产品规划工作流：需求澄清、用户旅程设计、TR1 用户需求说明书生成，支持 DAG 并行文档生成扩展",
       "version": "3.0.0",
-      "source": "./",
+      "source": "./plugins/cospec",
       "author": {
         "name": "afutemp"
       }

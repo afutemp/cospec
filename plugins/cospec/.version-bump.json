@@ -1,9 +1,10 @@
 {
   "files": [
-    { "path": ".claude-plugin/plugin.json",     "field": "version" },
+    { "path": ".claude-plugin/plugin.json",      "field": "version" },
     { "path": ".claude-plugin/marketplace.json", "field": "plugins.0.version" },
     { "path": ".codex-plugin/plugin.json",       "field": "version" },
-    { "path": ".cursor-plugin/plugin.json",      "field": "version" }
+    { "path": ".cursor-plugin/plugin.json",      "field": "version" },
+    { "path": "cospec.config.json",               "field": "_version" }
   ],
   "audit": {
     "exclude": [

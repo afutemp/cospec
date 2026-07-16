@@ -42,7 +42,7 @@ Create `$REPO_ROOT/.agents/plugins/marketplace.json`:
       "name": "cospec",
       "source": {
         "source": "local",
-        "path": "./"
+        "path": "./plugins/cospec"
       },
       "policy": {
         "installation": "AVAILABLE",
@@ -56,12 +56,14 @@ Create `$REPO_ROOT/.agents/plugins/marketplace.json`:
 
 **Personal marketplace:**
 
-Create `~/.agents/plugins/marketplace.json` with the same content, and adjust `source.path` to point at your local cospec clone (e.g., `"./.codex/cospec"`).
+Create `~/.agents/plugins/marketplace.json` with the same content, and adjust `source.path` to point at your local cospec clone (e.g., `"./plugins/cospec"` if the marketplace file is at the repo root).
 
 **CLI:**
 
 ```bash
-codex plugin marketplace add ./
+codex plugin marketplace add git@github.com:afutemp/cospec.git
+# or, from a local clone:
+codex plugin marketplace add /path/to/cospec
 ```
 
 Then restart the ChatGPT desktop app and install cospec from the plugin directory.
@@ -83,13 +85,13 @@ Use this when you are iterating locally or don't want to set up a marketplace.
 2. **Create the skills symlink:**
    ```bash
    mkdir -p ~/.agents/skills
-   ln -s ~/.codex/cospec/skills ~/.agents/skills/cospec
+   ln -s ~/.codex/cospec/plugins/cospec/skills ~/.agents/skills/cospec
    ```
 
    **Windows (PowerShell):**
    ```powershell
    New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.agents\skills"
-   cmd /c mklink /J "$env:USERPROFILE\.agents\skills\cospec" "$env:USERPROFILE\.codex\cospec\skills"
+   cmd /c mklink /J "$env:USERPROFILE\.agents\skills\cospec" "$env:USERPROFILE\.codex\cospec\plugins\cospec\skills"
    ```
 
 3. **Restart Codex** (quit and relaunch the CLI or desktop app) to discover the skills.
@@ -99,7 +101,7 @@ Use this when you are iterating locally or don't want to set up a marketplace.
 Codex has native skill discovery — it scans `~/.agents/skills/` at startup, parses SKILL.md frontmatter, and loads skills on demand. cospec skills are made visible through a single symlink:
 
 ```
-~/.agents/skills/cospec/ → ~/.codex/cospec/skills/
+~/.agents/skills/cospec/ → ~/.codex/cospec/plugins/cospec/skills/
 ```
 
 When installed via marketplace, Codex copies the plugin into its plugin cache and loads `skills/` from the plugin manifest (`skills: "./skills/"`).

@@ -8,6 +8,7 @@
   "homepage": "https://github.com/afutemp/cospec",
   "repository": "git@github.com:afutemp/cospec.git",
   "license": "MIT",
+  "skills": "./skills/",
   "keywords": [
     "product-planning",
     "requirements",
