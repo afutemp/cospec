@@ -52,7 +52,7 @@ allowed-tools: Bash Read Glob Write
       - `kb.localPath` 设置为下载后 KB 目录的**绝对路径**（当前工作目录 + `vdi-kb/`），因为 KB 在用户项目里、config 在插件根，相对路径无法跨目录解析。
    3. 使用 `Write` 或 `Bash` 写回 `<plugin-root>/cospec.config.json`。
    4. 报告写入的 config 文件绝对路径，让用户知道改的是哪个文件。
-   > 注意：此配置写在插件根，插件升级（重新 clone）时会被重置为默认值。这没关系——`product-kb-query` 默认会自动探测当前工作目录下的 `*-kb/` 目录，所以即使配置被重置，下载的 `vdi-kb/` 仍能被发现。
+   > 注意：此配置写在插件根，插件升级（重新 clone）时会被重置为默认值。升级后需重新运行 `/download-kb vdi` 配置。
 8. **输出结果**：报告复制成功、目标路径、配置结果。
 
 ## Output Contract

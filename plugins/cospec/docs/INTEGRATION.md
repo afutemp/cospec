@@ -236,35 +236,22 @@ cospec 支持通过 `cospec.config.json` 的 `kb` 字段接入产品知识库，
 }
 ```
 
-`kb.localPath` 默认为 `null`，此时 `product-kb-query` 会按以下顺序查找可用知识库：
-
-1. `config.kb.localPath`（若设置且目录存在并包含 `.md` 文件）。
-2. 自动探测：`product-kb/` → `kb/` → `knowledge-base/` → `docs/` → `*-kb/`。
-3. 如果都没找到，返回"当前知识库未覆盖该问题"。
+`kb.localPath` 默认为 `null`（不启用文件型 KB）。配置后 `product-kb-query` 仅使用该路径，不做自动探测。**推荐运行 `/download-kb vdi` 自动下载并配置，无需手动修改。**
 
 | 字段 | 说明 |
 | :--- | :--- |
-| `kb.skill` | 主 KB 查询 skill 名称。默认 `product-kb-query`；设为 `null` 可禁用 skill 查询，仅保留本地路径作为 fallback。 |
-| `kb.localPath` | 本地知识库目录（相对插件根目录或绝对路径）。默认 `null`，由 skill 自动探测。 |
+| `kb.skill` | 主 KB 查询 skill 名称。默认 `product-kb-query`；设为 `null` 可禁用 skill 查询。 |
+| `kb.localPath` | 本地知识库目录（相对插件根目录或绝对路径）。默认 `null`（不启用）。必须显式配置才能使用文件型 KB。 |
 
 ### 3.3 统一注入机制
 
 所有 leaf skill 都通过 `skill-invoker` SubAgent 被调度。`skill-invoker-prompt.md` 中已统一实现 KB 上下文注入，且会先检查 KB 是否可用：
 
 1. `skill-invoker` 在调用目标 leaf skill 前，先读取 `cospec.config.json`。
-2. 如果 `kb.skill` 已配置且不等于目标 skill 本身，再检查是否存在可用 KB 目录：
-   - 若 `kb.localPath` 设置且包含 `.md` 文件，则使用该目录；
-   - 否则自动探测 `product-kb/`、`kb/`、`knowledge-base/`、`docs/`、`*-kb/`，使用第一个包含 `.md` 文件的目录；
-   - 如果都没找到，**直接跳过 KB 注入**，不调用 KB skill。
-3. 如果找到可用 KB 目录，调用 `kb.skill` 并传入根据目标 skill 生成的具体问题，将返回结果作为背景上下文交给目标 leaf skill。
-
-   调用格式为：
-   ```
-   KB_ROOT: <kb_root>
-
-   <query>
-   ```
-   其中 `<kb_root>` 是 `skill-invoker` 发现的 KB 目录路径，`<query>` 是根据目标 skill 生成的具体问题。这样 `product-kb-query` 无需再次探测，直接使用该目录回答。
+2. 如果 `kb.skill` 已配置且不等于目标 skill 本身，再检查 `kb.localPath`：
+   - 若 `kb.localPath` 已设置且目录包含 `.md` 文件，则使用该目录；
+   - 否则 **直接跳过 KB 注入**，不做任何自动探测。
+3. 如果 KB 目录可用，调用 `kb.skill` 并传入路径和查询，将返回结果作为背景上下文交给目标 leaf skill。
 
 这意味着：
 

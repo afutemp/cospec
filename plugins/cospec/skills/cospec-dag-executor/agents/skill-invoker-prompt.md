@@ -23,9 +23,8 @@ Agent:
        3. Let `target_skill` be the skill named in the task card's **Skill** field.
        4. If `kb_skill` is set and is NOT the same as `target_skill`:
           - **Check KB availability first** to avoid calling the KB skill when there is no KB:
-            - Let `kb_root = config.kb.localPath` if it is set and the directory exists and contains at least one `.md` file.
-            - Otherwise, discover a KB directory by checking common names in order: `product-kb/`, `kb/`, `knowledge-base/`, `docs/`, any directory ending in `-kb/`. Use the first one that exists and contains at least one `.md` file.
-            - If no KB directory is found, skip this step entirely. Do not call the KB skill.
+            - Let `kb_root = config.kb.localPath`. If `kb_root` is `null`, not set, or the directory does not exist or contains no `.md` files, skip this step entirely. Do not call the KB skill.
+            - Do NOT auto-detect or search for KB directories — only use the configured `kb.localPath`. If the user has not configured a KB, there is no KB to query.
           - If a KB directory is found, construct a focused KB query based on the task card's `Task Spec`, `Input Artifacts`, and `target_skill`.
           - Use the following skill-to-query mapping as a starting point; adapt the query to the actual task content:
             - `product-planning-requirement-clarification`: "请总结与当前需求相关的产品战略、目标客户、已有功能、已知风险和约束。"
@@ -43,7 +42,7 @@ Agent:
 
             <query>
             ```
-            where `<kb_root>` is the discovered KB directory path (relative to the current working directory or plugin root) and `<query>` is the focused KB query constructed above.
+            where `<kb_root>` is the configured `kb.localPath` (resolved to an absolute path if relative) and `<query>` is the focused KB query constructed above.
           - Include the returned KB context in the conversation context before invoking the target skill.
           - If the KB skill returns "未覆盖", empty results, or an error, note that briefly and continue without KB context.
        5. If `kb_skill` is `null`/`false` or equals `target_skill`, skip this step.
