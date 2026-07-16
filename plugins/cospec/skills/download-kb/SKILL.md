@@ -1,7 +1,6 @@
 ---
 name: download-kb
 description: 将预置的知识库下载到当前工作目录，并自动配置到 cospec.config.json。当前支持 `vdi`。
-disable-model-invocation: true
 allowed-tools: Bash Read Glob Write
 ---
 
