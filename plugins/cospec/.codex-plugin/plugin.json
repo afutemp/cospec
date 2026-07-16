@@ -1,6 +1,6 @@
 {
   "name": "cospec",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "AI 原生产品规划工作流：需求澄清、用户旅程设计、TR1 用户需求说明书生成，支持 DAG 并行文档生成扩展",
   "author": {
     "name": "afutemp"
