@@ -4,15 +4,15 @@
 
 ## 工作流路由
 
-`brainstorming` 按需求规模路由到 workflow entry skill，再由其调用 `cospec-dag-executor` 并行调度 leaf skills：
+`brainstorming` 按需求规模路由到 workflow entry skill，后者在主会话中串行调用各 leaf skill：
 
 ```
-用户意图 ──→ brainstorming ──→ { large-requirement-workflow | small-requirement-workflow } ──→ cospec-dag-executor ──→ leaf skills
+用户意图 ──→ brainstorming ──→ { large-requirement-workflow | small-requirement-workflow } ──→ 串行调用 leaf skills
 ```
 
 | 用户状态 | 路由 | 说明 |
 |---------|------|------|
-| 大需求：需要共创/客户/竞品研究，或要 TR2 产物；范围大、"想全面" | → `large-requirement-workflow` | 澄清 → 研究（5 并发）→ 旅程 → TR1 → TR2 |
+| 大需求：需要共创/客户/竞品研究，或要 TR2 产物；范围大、"想全面" | → `large-requirement-workflow` | 澄清 → 研究（5 串行）→ 旅程 → TR1 → TR2 |
 | 小需求：范围聚焦、无需研究/竞品、到 TR1 即止 | → `small-requirement-workflow` | 澄清 → 旅程 → TR1 |
 | 无法判断 | → `large-requirement-workflow` | 默认大需求管线 |
 
@@ -23,7 +23,7 @@
 | # | 阶段 | Skill | 核心产物 |
 |---|------|------|----------|
 | 1 | **需求澄清** | `product-planning-requirement-clarification` | 需求背景澄清交付物（需求概述、全景结论、异常边界与风险、下游影响、事实/假设/待确认、3-5 条核心共识） |
-| 2 | **研究/分析**（仅大需求，5 个必选并发） | `co-create-customer-minutes-analysis` / `customer-experience-feedback-analysis-v2` / `competitor-feature-research` / `competitor-pain-points` / `competitor-problem-solving` | 共创验证报告 / 客户体验反馈报告 / 竞品分析报告 |
+| 2 | **研究/分析**（仅大需求，5 个串行） | `co-create-customer-minutes-analysis` / `customer-experience-feedback-analysis-v2` / `competitor-feature-research` / `competitor-pain-points` / `competitor-problem-solving` | 共创验证报告 / 客户体验反馈报告 / 竞品分析报告 |
 | 3 | **用户旅程设计** | `user-journey-design` | 用户旅程设计文档（需求背景、方案设计、未来旅程、目标达成分析） |
 | 4 | **TR1 需求说明书** | `tr1-requirements-spec` | TR1 用户需求说明书（大需求评审版 + AI 上下文版 / 小需求评审版） |
 | 5 | **TR2 产物**（仅大需求） | `tr2-epic-creator` / `tr2-feature-creator` / `tr2-story-creator` / `tr2-tech-creator` | EPIC / Feature / Story / Tech 需求文档（可追溯至 TR1 AI 上下文版） |
@@ -79,9 +79,9 @@
 |-------|------|
 | `using-spec-developer` | 入口点：指导如何使用 skill |
 | `brainstorming` | 中央路由器：评估规划阶段，选择 workflow entry skill |
-| `large-requirement-workflow` | 大需求工作流编排器：澄清 → 研究 → 旅程 → TR1 → TR2 |
-| `small-requirement-workflow` | 小需求工作流编排器：澄清 → 旅程 → TR1 |
-| `product-kb-query` | 产品知识库查询：被 `skill-invoker` 统一调用，为 leaf skills 注入知识库上下文 |
+| `large-requirement-workflow` | 大需求工作流编排器：串行调用 12 个 leaf skill（澄清 → 研究 → 旅程 → TR1 → TR2） |
+| `small-requirement-workflow` | 小需求工作流编排器：串行调用 3 个 leaf skill（澄清 → 旅程 → TR1） |
+| `product-kb-query` | 产品知识库查询：按需为 leaf skills 注入知识库上下文 |
 | `download-kb` | 下载预置知识库到当前工作目录（当前支持 `vdi`） |
 | `product-planning-requirement-clarification` | 需求澄清：原始想法 → "想全面"的澄清结果 |
 | `co-create-customer-minutes-analysis` | 共创客户纪要分析（验证报告） |
@@ -97,9 +97,6 @@
 | `tr2-tech-creator` | TR2 Tech 需求生成 |
 | `cospec-configure` | 交互式配置：设置 project info、模板、默认 workflow 等 |
 | `writing-skills` | 编写/修改/验证 skill 的元 skill |
-| `cospec-dag-planner` | DAG 计划生成：为 workflow entry skill 生成 `dag.json` 和 task cards |
-| `cospec-dag-executor` | DAG 执行器：按 ready-set 并行调度 `skill-invoker` SubAgents |
-| `cospec-dag-evaluator` | DAG 计划评估：检查 DAG 无环性、skill 引用、占位符等 |
 
 ## 扩展与接入
 

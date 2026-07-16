@@ -82,9 +82,9 @@
 
 > 当前知识库仅基于 Super Admin 视角梳理，未使用普通管理员/受限管理员账号验证菜单及操作权限差异。如需准确答案，需补充对应角色的权限验证。
 
-## 示例 5：被 skill-invoker 调用时的输入
+## 示例 5：被其他 skill 调用时的输入
 
-当 `skill-invoker` 在调用 `product-planning-requirement-clarification` 前调用本 skill 时，可能收到如下查询：
+当 `product-planning-requirement-clarification` 在执行前调用本 skill 时，可能收到如下查询：
 
 **查询：** "请总结与当前需求相关的产品战略、目标客户、已有功能、已知风险和约束。"
 

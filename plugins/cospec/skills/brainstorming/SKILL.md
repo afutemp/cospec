@@ -63,7 +63,7 @@ brainstorming 是所有产品规划工作的唯一入口，承担单一职责：
 
 ## 三、流程全景
 
-brainstorming 只负责**路由**——判断需求规模、向用户确认、分发到对应的 workflow entry skill，随后结束。**各 workflow 的具体步骤（澄清/研究/旅程/TR1/TR2 的编排与并发）由其自身 SKILL.md 定义**，brainstorming 不重复维护，避免与下游 workflow 产生耦合。
+brainstorming 只负责**路由**——判断需求规模、向用户确认、分发到对应的 workflow entry skill，随后结束。**各 workflow 的具体步骤（澄清/研究/旅程/TR1/TR2 的串行编排）由其自身 SKILL.md 定义**，brainstorming 不重复维护，避免与下游 workflow 产生耦合。
 
 ```text
 用户意图

@@ -9,7 +9,7 @@
 cospec 是一个基于 **Skill** 的 AI 工作流插件：
 
 - **Skill**：放在 `skills/<skill-name>/SKILL.md` 的 Markdown 文件，前端带 YAML frontmatter，描述 AI Agent 的触发条件、行为契约和输出格式。
-- **主链（Pipeline）**：产品规划的标准流程，由 `brainstorming` 路由到合适的 workflow entry skill，再由 workflow entry skill 编排 leaf skills：
+- **主链（Pipeline）**：产品规划的标准流程，由 `brainstorming` 路由到合适的 workflow entry skill，再由 workflow entry skill 在主会话中串行调用各 leaf skill：
 
 ```
 brainstorming
@@ -17,11 +17,8 @@ brainstorming
     ├─→ large-requirement-workflow
     │       │
     │       ▼
-    │   cospec-dag-executor
-    │       │
-    │       ▼
     │   product-planning-requirement-clarification
-    │   co-create / customer-experience / competitor-*  (step2, 5 个必选并发)
+    │   co-create / customer-experience / competitor-*  (step2, 5 个串行)
     │   user-journey-design
     │   tr1-requirements-spec
     │   tr2-epic / tr2-feature / tr2-story / tr2-tech
@@ -29,17 +26,13 @@ brainstorming
     └─→ small-requirement-workflow
             │
             ▼
-        cospec-dag-executor
-            │
-            ▼
         product-planning-requirement-clarification
         user-journey-design
         tr1-requirements-spec
 ```
 
-- **Workflow Entry Skill**：编排一组 leaf skills 的入口 skill，例如 `large-requirement-workflow`、`small-requirement-workflow`。它生成 DAG 产物并调用 `cospec-dag-executor`。
+- **Workflow Entry Skill**：编排一组 leaf skills 的入口 skill，例如 `large-requirement-workflow`、`small-requirement-workflow`。它在主会话中直接串行调用各 leaf skill。
 - **Leaf Skill**：实际执行业务步骤的 skill，例如 `product-planning-requirement-clarification`、`user-journey-design`、`tr1-requirements-spec`。
-- **共享 DAG 基础设施**：`cospec-dag-planner`、`cospec-dag-executor`、`cospec-dag-evaluator` 被 workflow entry skills 调用。
 - **元 Skill**：`using-spec-developer`、`cospec-configure`、`writing-skills` 不参与主链业务。
 
 ---
@@ -112,55 +105,42 @@ cospec 在每个 workflow 阶段后预留了 evaluator 配置位：
 - 若为字符串，调用对应 skill 名称进行评审，返回等级（如 A/B/C/D/F）和问题列表；
 - 评审不通过（如低于 B）则返工，通过才允许进入下一阶段。
 
-### 2.4 Skill 级 DAG 编排
+### 2.4 工作流编排
 
-cospec 的 workflow entry skills 使用一套共享的 DAG 基础设施来编排 leaf skills。
+cospec 的 workflow entry skills 在主会话中直接串行调用各 leaf skill。
 
 ```
 large-requirement-workflow
         │
         ▼
-cospec-dag-planner          # 可选：生成 .cospec/runs/<RUN_DIR>/dag.json + task cards
+Skill("product-planning-requirement-clarification")
         │
         ▼
-[cospec-dag-evaluator]      # 可选：评估 DAG 计划质量
+Skill("co-create-customer-minutes-analysis")
+Skill("customer-experience-feedback-analysis-v2")
+Skill("competitor-feature-research")
+Skill("competitor-pain-points")
+Skill("competitor-problem-solving")
         │
         ▼
-cospec-dag-executor         # 并行调度 skill-invoker SubAgents
+Skill("user-journey-design")
         │
         ▼
-skill-invoker SubAgent ──→ product-planning-requirement-clarification
-skill-invoker SubAgent ──→ user-journey-design
-skill-invoker SubAgent ──→ tr1-requirements-spec
-```
-
-相关 skill：
-
-- `cospec-dag-planner`：生成 skill 级 DAG 产物。
-- `cospec-dag-executor`：按 ready set 并行调度 `skill-invoker` SubAgents。
-- `cospec-dag-evaluator`：评估 DAG 合法性。
-
-DAG 产物存放在 `.cospec/runs/<RUN_DIR>/`：
-
-```text
-.cospec/runs/<RUN_DIR>/
-  dag.json
-  index.md
-  tasks/<task-id>.md
-  <task-id>/
-    manifest.json
-    results.md
-  execution/
-    run-state.json
-    time-stats.log
+Skill("tr1-requirements-spec")
+        │
+        ▼
+Skill("tr2-epic-creator")
+Skill("tr2-feature-creator")
+Skill("tr2-story-creator")
+Skill("tr2-tech-creator")
 ```
 
 特点：
 
-- Skill 之间的依赖关系写在 workflow entry skill 的 prompt 中，不由 `cospec.config.json` 配置节点关系。
-- 所有 leaf skill 通过 `skill-invoker` SubAgent 调用。
-- SubAgent 不能直接问用户；需要用户输入时返回 `NEEDS_CONTEXT`，由主 Agent 统一收集问题并错峰提问。
-- 当前默认 workflow 为线性 DAG。未来可在 workflow entry skill 中增加并行辅助 skill 节点。
+- 每个 step 的 leaf skill 通过 `Skill("<skill-name>")` 直接调用，用户交互 inline。
+- Skill 按 step1 → step2(5个) → step3 → step4 → step5(4个) 顺序串行执行。
+- 各 skill 在执行过程中需要用户输入时直接提问，无需中间层。
+- 当前默认 workflow 为线性串行。未来可在 workflow entry skill 中调整编排逻辑。
 
 ### 2.5 修改某个 Skill 的行为
 
@@ -243,21 +223,12 @@ cospec 支持通过 `cospec.config.json` 的 `kb` 字段接入产品知识库，
 | `kb.skill` | 主 KB 查询 skill 名称。默认 `product-kb-query`；设为 `null` 可禁用 skill 查询。 |
 | `kb.localPath` | 本地知识库目录（相对插件根目录或绝对路径）。默认 `null`（不启用）。必须显式配置才能使用文件型 KB。 |
 
-### 3.3 统一注入机制
+### 3.3 KB 上下文注入
 
-所有 leaf skill 都通过 `skill-invoker` SubAgent 被调度。`skill-invoker-prompt.md` 中已统一实现 KB 上下文注入，且会先检查 KB 是否可用：
+当 leaf skill 需要产品知识库上下文时，在其 SKILL.md 的 Workflow 中显式调用 `product-kb-query`：
 
-1. `skill-invoker` 在调用目标 leaf skill 前，先读取 `cospec.config.json`。
-2. 如果 `kb.skill` 已配置且不等于目标 skill 本身，再检查 `kb.localPath`：
-   - 若 `kb.localPath` 已设置且目录包含 `.md` 文件，则使用该目录；
-   - 否则 **直接跳过 KB 注入**，不做任何自动探测。
-3. 如果 KB 目录可用，调用 `kb.skill` 并传入路径和查询，将返回结果作为背景上下文交给目标 leaf skill。
-
-这意味着：
-
-- **不需要修改任何 leaf skill**：它们会在执行时自动收到 KB 上下文。
-- **不需要修改 DAG 拓扑**：workflow entry skills 的节点和依赖关系完全不变。
-- **可全局开关**：修改 `kb.skill` 为 `null` 即可关闭注入。
+1. 读取 `cospec.config.json` 检查 `kb.skill` 和 `kb.localPath` 是否已配置。
+2. 如果配置可用，调用 `kb.skill` 并传入查询，将返回结果作为背景上下文。
 
 ### 3.4 替换为自己的知识库
 
@@ -290,7 +261,7 @@ cospec 支持通过 `cospec.config.json` 的 `kb` 字段接入产品知识库，
      }
    }
    ```
-3. 自定义 skill 同样会被 `skill-invoker` 在调用 leaf skill 前统一调用。
+3. 自定义 skill 会在对应 leaf skill 的 Workflow 中被按需调用。
 
 ### 3.6 禁用 KB 注入
 
@@ -305,7 +276,7 @@ cospec 支持通过 `cospec.config.json` 的 `kb` 字段接入产品知识库，
 }
 ```
 
-此时 `skill-invoker` 不再调用任何 KB skill，workflow 仍正常运行，只是 leaf skills 不会收到额外知识库上下文。
+此时不再调用任何 KB skill，workflow 仍正常运行，只是 leaf skills 不会收到额外知识库上下文。
 
 ### 3.7 扩展 download-kb 支持更多知识库
 
@@ -362,7 +333,7 @@ description: Use when the user needs to analyze competitors before designing the
 ```
 
 3. **接入 `large-requirement-workflow`**：
-   编辑 `skills/large-requirement-workflow/SKILL.md`，在 DAG 描述中将 `competitor-analysis` 作为独立节点加入，并声明其依赖关系。然后生成对应的 task card 模板。
+   编辑 `skills/large-requirement-workflow/SKILL.md`，在 step 列表中插入 `Skill("competitor-analysis")`。
 
 4. **更新文档**：在 `README.md` 和 `CLAUDE.md` 的 Skill 清单和流程图中补充新节点。
 
@@ -378,7 +349,7 @@ skills/product-planning-with-competitor-workflow/
 └── README.zh.md
 ```
 
-2. 在 `SKILL.md` 中声明本 workflow 的 DAG、task cards、以及调用 `cospec-dag-executor` 的步骤。
+2. 在 `SKILL.md` 中声明本 workflow 的节点列表和串行调用步骤（参考 `large-requirement-workflow`）。
 
 3. 在 `skills/brainstorming/SKILL.md` 路由表中增加该 workflow 的触发条件。
 
