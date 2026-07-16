@@ -5,6 +5,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
+# Verification marker: cross-platform log (works on Windows Git Bash, macOS, Linux)
+printf '%s session-start called from %s\n' "$(date -Iseconds 2>/dev/null || date +%Y-%m-%dT%H:%M:%S%z)" "$0" >> "${PLUGIN_ROOT}/.session-start.log" 2>/dev/null || true
+
 # # Always refresh kb-Product knowledge base to latest (non-blocking, stderr only)
 # KB_QUERY_TARGET="${HOME}/.claude/skills/kb-query"
 # if [ -d "${KB_QUERY_TARGET}" ]; then
