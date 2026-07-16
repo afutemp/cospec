@@ -207,9 +207,131 @@ DAG 产物存放在 `.cospec/runs/<RUN_DIR>/`：
 
 ---
 
-## 3. 新增工作流
+## 3. 接入知识库（KB）
 
-### 3.1 修改现有 Workflow Entry Skill
+cospec 支持通过 `cospec.config.json` 的 `kb` 字段接入产品知识库，并默认启用 `product-kb-query` skill 在调用 leaf skills 前统一注入 KB 上下文。
+
+**默认不内置任何具体知识库内容**。插件提供 `download-kb` skill，用于把预置知识库下载到当前工作目录。
+
+### 3.1 下载预置知识库
+
+当前支持下载 `vdi` 知识库：
+
+```
+/download-kb vdi
+```
+
+执行后会将知识库复制到当前工作目录的 `vdi-kb/` 下。
+
+### 3.2 配置方式
+
+下载后，修改 `cospec.config.json` 的 `kb.localPath` 指向该目录（相对插件根目录或绝对路径）。例如下载到当前目录时：
+
+```json
+{
+  "kb": {
+    "skill": "product-kb-query",
+    "localPath": "vdi-kb/"
+  }
+}
+```
+
+`kb.localPath` 默认为 `null`，此时 `product-kb-query` 会按以下顺序查找可用知识库：
+
+1. `config.kb.localPath`（若设置且目录存在并包含 `.md` 文件）。
+2. 自动探测：`product-kb/` → `kb/` → `knowledge-base/` → `docs/` → `*-kb/`。
+3. 如果都没找到，返回"当前知识库未覆盖该问题"。
+
+| 字段 | 说明 |
+| :--- | :--- |
+| `kb.skill` | 主 KB 查询 skill 名称。默认 `product-kb-query`；设为 `null` 可禁用 skill 查询，仅保留本地路径作为 fallback。 |
+| `kb.localPath` | 本地知识库目录（相对插件根目录或绝对路径）。默认 `null`，由 skill 自动探测。 |
+
+### 3.3 统一注入机制
+
+所有 leaf skill 都通过 `skill-invoker` SubAgent 被调度。`skill-invoker-prompt.md` 中已统一实现 KB 上下文注入，且会先检查 KB 是否可用：
+
+1. `skill-invoker` 在调用目标 leaf skill 前，先读取 `cospec.config.json`。
+2. 如果 `kb.skill` 已配置且不等于目标 skill 本身，再检查是否存在可用 KB 目录：
+   - 若 `kb.localPath` 设置且包含 `.md` 文件，则使用该目录；
+   - 否则自动探测 `product-kb/`、`kb/`、`knowledge-base/`、`docs/`、`*-kb/`，使用第一个包含 `.md` 文件的目录；
+   - 如果都没找到，**直接跳过 KB 注入**，不调用 KB skill。
+3. 如果找到可用 KB 目录，调用 `kb.skill` 并传入根据目标 skill 生成的具体问题，将返回结果作为背景上下文交给目标 leaf skill。
+
+   调用格式为：
+   ```
+   KB_ROOT: <kb_root>
+
+   <query>
+   ```
+   其中 `<kb_root>` 是 `skill-invoker` 发现的 KB 目录路径，`<query>` 是根据目标 skill 生成的具体问题。这样 `product-kb-query` 无需再次探测，直接使用该目录回答。
+
+这意味着：
+
+- **不需要修改任何 leaf skill**：它们会在执行时自动收到 KB 上下文。
+- **不需要修改 DAG 拓扑**：workflow entry skills 的节点和依赖关系完全不变。
+- **可全局开关**：修改 `kb.skill` 为 `null` 即可关闭注入。
+
+### 3.4 替换为自己的知识库
+
+如果你有自己的产品知识库：
+
+1. 准备按 `product-planning-kb` 目录结构整理的 markdown 文件（`00-综述/`、`01-用户与机会/`、`02-规划与范围/`、`03-功能规划/`、`04-质量与约束/`、`05-协作与依赖/`、`06-验证与反馈/`、`附录/`、`README.md`）。
+2. 将目录放到当前工作目录或插件根目录下，例如 `my-product-kb/`。
+3. 修改 `cospec.config.json`：
+   ```json
+   {
+     "kb": {
+       "skill": "product-kb-query",
+       "localPath": "my-product-kb/"
+     }
+   }
+   ```
+4. 运行 `/product-kb-query "你的问题"` 验证查询是否正常。
+
+### 3.5 替换为自己的 KB 查询 skill
+
+如果你希望用自定义 skill 替代 `product-kb-query`：
+
+1. 新建 `skills/<my-kb-skill>/SKILL.md`，实现同样的输入输出契约：接收一个具体问题字符串，返回带来源标注的结构化 Markdown 回答。
+2. 修改 `cospec.config.json`：
+   ```json
+   {
+     "kb": {
+       "skill": "my-kb-skill",
+       "localPath": "my-product-kb/"
+     }
+   }
+   ```
+3. 自定义 skill 同样会被 `skill-invoker` 在调用 leaf skill 前统一调用。
+
+### 3.6 禁用 KB 注入
+
+将 `cospec.config.json` 中的 `kb.skill` 设为 `null`：
+
+```json
+{
+  "kb": {
+    "skill": null,
+    "localPath": "doc/kb/"
+  }
+}
+```
+
+此时 `skill-invoker` 不再调用任何 KB skill，workflow 仍正常运行，只是 leaf skills 不会收到额外知识库上下文。
+
+### 3.7 扩展 download-kb 支持更多知识库
+
+`download-kb` 当前内置 `vdi` 映射。要增加新的预置知识库：
+
+1. 编辑 `skills/download-kb/SKILL.md` 的 **Inputs** 表格和 **Workflow** 中的源路径映射。
+2. 更新 README、CLAUDE.md 中 `download-kb` 的职责说明。
+
+---
+
+## 4. 新增工作流
+
+### 4.1 修改现有 Workflow Entry Skill
 
 当前 `brainstorming` 默认出口为 `large-requirement-workflow`。所有产品规划相关的新阶段都应该在对应的 workflow entry skill 内部编排，而不是直接接入 `brainstorming`。
 
@@ -257,7 +379,7 @@ description: Use when the user needs to analyze competitors before designing the
 
 4. **更新文档**：在 `README.md` 和 `CLAUDE.md` 的 Skill 清单和流程图中补充新节点。
 
-### 3.2 新增 Workflow Entry Skill
+### 4.2 新增 Workflow Entry Skill
 
 如果要新增一个完整 workflow（例如 `product-planning-with-competitor-workflow`）：
 
@@ -275,7 +397,7 @@ skills/product-planning-with-competitor-workflow/
 
 4. 更新 `README.md`、`CLAUDE.md`、`docs/INTEGRATION.md`。
 
-### 3.3 新增独立工作流（非产品规划主链）
+### 4.3 新增独立工作流（非产品规划主链）
 
 如果是与产品规划无关的独立能力（例如代码评审、测试用例生成）：
 
@@ -284,7 +406,7 @@ skills/product-planning-with-competitor-workflow/
 3. 用户通过直接调用 skill 名称使用，例如 `/skill code-review`。
 4. 如果需要在会话启动时自动引导，参考 `using-spec-developer` 的模式。
 
-### 3.4 新增配置项
+### 4.4 新增配置项
 
 如果新 skill 需要可配置项：
 
@@ -298,9 +420,9 @@ skills/product-planning-with-competitor-workflow/
 
 ---
 
-## 4. 子 SKILL 的放置规范
+## 5. 子 SKILL 的放置规范
 
-### 4.1 目录结构
+### 5.1 目录结构
 
 每个 skill 必须是一个独立目录，且 workflow skill 建议包含 **Extension Points** 章节：
 
@@ -320,13 +442,13 @@ skills/<skill-name>/
     └── some-reference.md
 ```
 
-### 4.2 命名规范
+### 5.2 命名规范
 
 - 目录名与 `SKILL.md` frontmatter 中的 `name` 必须一致。
 - 使用小写字母、数字和连字符 `-`。
 - 禁止带平台前缀（如 `claude-`、`cursor-`）。
 
-### 4.3 子 Skill 引用方式
+### 5.3 子 Skill 引用方式
 
 Skill 之间通过**名称**引用，不带路径前缀：
 
@@ -340,7 +462,7 @@ Skill 之间通过**名称**引用，不带路径前缀：
 调用 skills/user-journey-design/SKILL.md
 ```
 
-### 4.4 静态资源路径
+### 5.4 静态资源路径
 
 如果 skill 需要引用 templates 或 references 中的文件，路径应相对于 skill 自身目录或插件根目录：
 
@@ -356,7 +478,7 @@ See `templates/user-requirement-template.md` for the default TR1 template.
 
 ---
 
-## 5. 验证新 Skill
+## 6. 验证新 Skill
 
 新增或修改 skill 后，必须验证：
 
@@ -367,7 +489,7 @@ See `templates/user-requirement-template.md` for the default TR1 template.
 
 ---
 
-## 6. 插件元数据
+## 7. 插件元数据
 
 发布或fork后，可能需要更新以下文件中的元数据：
 
@@ -381,11 +503,12 @@ See `templates/user-requirement-template.md` for the default TR1 template.
 
 ---
 
-## 7. 快速清单
+## 8. 快速清单
 
 - [ ] 新建 skill 目录并编写 `SKILL.md`
 - [ ] `name` 与目录名一致，仅使用小写和连字符
 - [ ] 如需替换模板、规则或 evaluator，更新 `cospec.config.json`
+- [ ] 如需接入知识库，更新 `cospec.config.json` 的 `kb` 字段
 - [ ] 在 workflow skill 的 `SKILL.md` 中声明 Extension Points
 - [ ] 如需修改现有 workflow，更新对应的 workflow entry skill
 - [ ] 如需新增 workflow，新建 workflow entry skill 并在 `brainstorming` 路由表中注册

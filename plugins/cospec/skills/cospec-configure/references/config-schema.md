@@ -29,13 +29,13 @@ cospec.config.json (non-null value)
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `skill` | string \| null | null | Replace the default KB query method with your own skill name. |
-| `localPath` | string \| null | `doc/kb/` | Local knowledge base directory for file-based lookups. |
+| `skill` | string \| null | `"product-kb-query"` | Replace the default KB query method with your own skill name. Set to `null` to disable skill-based KB lookup. |
+| `localPath` | string \| null | `null` | Local knowledge base directory for file-based lookups. Set to `null` to rely on auto-discovery or disable file-based lookup. |
 
 **KB discovery order:**
 
 ```
-config.kb.skill (if set) → config.kb.localPath (if set) → code-first (Glob + Grep + Read)
+config.kb.skill (if not null) → config.kb.localPath (if set) → code-first (Glob + Grep + Read)
 ```
 
 ## `templates`

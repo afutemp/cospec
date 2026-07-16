@@ -52,7 +52,7 @@ After reading the config, output:
   templates (user-requirement, user-journey, tr1-large-review, tr1-large-ai, tr1-small-review)
   rules (requirement-checklists)
   evaluators (product-planning-requirement-clarification, user-journey-design, tr1-requirements-spec)
-  kb (localPath: doc/kb/)
+  kb (skill: product-kb-query, localPath: null)
   env (DAEDALUS_URL, DAEDALUS_API_KEY)
   workflow (default: large-requirement-workflow)
 
@@ -157,10 +157,10 @@ Validation: non-empty string.
 ### `kb` — 知识库
 
 **skill**
-> "你是否有自己的知识库查询 skill？输入 skill 名称，或跳过使用默认本地查找。"
+> "是否启用知识库查询 skill？输入 skill 名称（默认：`product-kb-query`），输入 `null` 禁用 skill 查询并仅使用本地路径，或跳过使用默认。"
 
 **localPath**
-> "本地知识库目录路径是什么？请提供路径（相对 plugin 根目录或绝对路径），或跳过使用默认：`doc/kb/`。"
+> "本地知识库目录路径是什么？请提供路径（相对 plugin 根目录或绝对路径），或跳过使用默认：`null`（由 skill 自动探测）。建议先通过 `/download-kb vdi` 下载预置知识库，再配置为该目录。"
 
 After user provides a path: verify the directory exists.
 

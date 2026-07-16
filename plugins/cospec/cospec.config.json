@@ -1,7 +1,7 @@
 {
   "_comment": "cospec plugin configuration. Run 'cospec-configure' skill to replace any value with your own path, skill name, or credential.",
   "_version": "3.0.0",
-  "_updated": "2026-07-15",
+  "_updated": "2026-07-16",
 
   "project": {
     "_comment": "Project metadata. 'product' identifies the product line (e.g., SCC, SCP, DMP).",
@@ -16,8 +16,8 @@
 
   "kb": {
     "_comment": "Knowledge base access. 'skill' is the PRIMARY KB query method. 'localPath' is FALLBACK only.",
-    "skill": null,
-    "localPath": "doc/kb/"
+    "skill": "product-kb-query",
+    "localPath": null
   },
 
   "templates": {

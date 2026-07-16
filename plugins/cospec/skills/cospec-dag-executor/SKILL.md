@@ -153,12 +153,13 @@ Dispatch with artifact paths only:
 Required behavior:
 
 1. Read task card and upstream manifests.
-2. Invoke the skill named in the task card's `Skill` field.
-3. If the invoked skill needs user input, do NOT ask the user directly. Return `NEEDS_CONTEXT` with the question.
-4. Write artifacts:
+2. If a knowledge base is configured and available, inject KB context before invoking the target skill (see `agents/skill-invoker-prompt.md` for the exact injection rules).
+3. Invoke the skill named in the task card's `Skill` field.
+4. If the invoked skill needs user input, do NOT ask the user directly. Return `NEEDS_CONTEXT` with the question.
+5. Write artifacts:
    - `.cospec/runs/<RUN_DIR>/<task-id>/results.md`
    - `.cospec/runs/<RUN_DIR>/<task-id>/manifest.json`
-5. Return minimal status report.
+6. Return minimal status report.
 
 Allowed return statuses:
 

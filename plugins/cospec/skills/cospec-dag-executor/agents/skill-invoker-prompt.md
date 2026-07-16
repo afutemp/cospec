@@ -17,11 +17,41 @@ Agent:
 
     1. Read the task card carefully.
     2. Read any upstream manifests and their `results.md` files.
-    3. Invoke the skill named in the task card's **Skill** field by calling it by name.
-    4. Execute the skill exactly as instructed in its SKILL.md.
-    5. Do NOT ask the user any questions directly. When the skill tells you to confirm / decide / ask the user / wait before proceeding — in any language (e.g. "请确认…确认后进入下一步", "输出必须以确认问题收尾", "must confirm before proceeding") — that is the skill needing the user. Stop and return `NEEDS_CONTEXT`. See Handling User Input for how to recognize and report this.
-    6. Do not include content outside the scope of this task card.
-    7. Do not use placeholders such as `TBD`, `TODO`, or "稍后补充".
+    3. **Inject knowledge base context (if configured and available):**
+       1. Read `<plugin-root>/cospec.config.json`.
+       2. Let `kb_skill = config.kb.skill`.
+       3. Let `target_skill` be the skill named in the task card's **Skill** field.
+       4. If `kb_skill` is set and is NOT the same as `target_skill`:
+          - **Check KB availability first** to avoid calling the KB skill when there is no KB:
+            - Let `kb_root = config.kb.localPath` if it is set and the directory exists and contains at least one `.md` file.
+            - Otherwise, discover a KB directory by checking common names in order: `product-kb/`, `kb/`, `knowledge-base/`, `docs/`, any directory ending in `-kb/`. Use the first one that exists and contains at least one `.md` file.
+            - If no KB directory is found, skip this step entirely. Do not call the KB skill.
+          - If a KB directory is found, construct a focused KB query based on the task card's `Task Spec`, `Input Artifacts`, and `target_skill`.
+          - Use the following skill-to-query mapping as a starting point; adapt the query to the actual task content:
+            - `product-planning-requirement-clarification`: "请总结与当前需求相关的产品战略、目标客户、已有功能、已知风险和约束。"
+            - `user-journey-design`: "请总结与当前需求相关的用户角色、用户旅程、触点、机会地图、老客户升级影响和竞品差异。"
+            - `tr1-requirements-spec`: "请总结与当前需求相关的功能规划、需求规格、验收标准、依赖和风险。"
+            - `tr2-epic-creator`: "请总结与当前需求相关的产品战略、价值定位、已有 EPIC、功能边界和依赖。"
+            - `tr2-feature-creator`: "请总结与当前需求相关的功能规划、已有功能、验收标准和技术依赖。"
+            - `tr2-story-creator`: "请总结与当前需求相关的用户场景、业务规则、验收标准和关联的 EPIC/Feature。"
+            - `tr2-tech-creator`: "请总结与当前需求相关的非功能需求、依赖系统、接口约定和已知技术风险。"
+            - For research skills (`co-create-customer-minutes-analysis`, `customer-experience-feedback-analysis-v2`, `competitor-feature-research`, `competitor-pain-points`, `competitor-problem-solving`): "请总结与当前研究主题相关的产品背景、目标客户、现有能力、已知风险和竞品差异。"
+            - For any other skill: construct a concise query that asks for the product background most relevant to the task.
+          - Invoke `kb_skill` with the following input using the Skill tool:
+            ```
+            KB_ROOT: <kb_root>
+
+            <query>
+            ```
+            where `<kb_root>` is the discovered KB directory path (relative to the current working directory or plugin root) and `<query>` is the focused KB query constructed above.
+          - Include the returned KB context in the conversation context before invoking the target skill.
+          - If the KB skill returns "未覆盖", empty results, or an error, note that briefly and continue without KB context.
+       5. If `kb_skill` is `null`/`false` or equals `target_skill`, skip this step.
+    4. Invoke the skill named in the task card's **Skill** field by calling it by name.
+    5. Execute the skill exactly as instructed in its SKILL.md, using the KB context (if any) as background.
+    6. Do NOT ask the user any questions directly. When the skill tells you to confirm / decide / ask the user / wait before proceeding — in any language (e.g. "请确认…确认后进入下一步", "输出必须以确认问题收尾", "must confirm before proceeding") — that is the skill needing the user. Stop and return `NEEDS_CONTEXT`. See Handling User Input for how to recognize and report this.
+    7. Do not include content outside the scope of this task card.
+    8. Do not use placeholders such as `TBD`, `TODO`, or "稍后补充".
 
     ## Handling User Input
 

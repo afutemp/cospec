@@ -81,6 +81,8 @@
 | `brainstorming` | 中央路由器：评估规划阶段，选择 workflow entry skill |
 | `large-requirement-workflow` | 大需求工作流编排器：澄清 → 研究 → 旅程 → TR1 → TR2 |
 | `small-requirement-workflow` | 小需求工作流编排器：澄清 → 旅程 → TR1 |
+| `product-kb-query` | 产品知识库查询：被 `skill-invoker` 统一调用，为 leaf skills 注入知识库上下文 |
+| `download-kb` | 下载预置知识库到当前工作目录（当前支持 `vdi`） |
 | `product-planning-requirement-clarification` | 需求澄清：原始想法 → "想全面"的澄清结果 |
 | `co-create-customer-minutes-analysis` | 共创客户纪要分析（验证报告） |
 | `customer-experience-feedback-analysis-v2` | 客户使用体验反馈分析 |
