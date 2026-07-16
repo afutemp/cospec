@@ -1,0 +1,10 @@
+{
+  "issues": [
+    {"id": 1, "name": "规划主题", "issue_category": {"key": "epic"}, "desc": "<h1>目标</h1><p>提升效率</p>"},
+    {"id": 2, "parent_id": 1, "name": "智能规划", "issue_category": {"key": "feature"}, "desc": "<p>支持：</p><ul><li>生成</li><li>更新</li></ul>", "status": {"name": "开发中"}, "custom_fields": {"priority": "高"}, "assigner": {"display_name": "产品经理"}, "product": {"id": 9, "name": "千流"}},
+    {"id": 3, "parent_id": 2, "name": "生成知识库", "issue_category": {"key": "story"}, "desc": "<p>用户生成知识库</p>"},
+    {"id": 4, "parent_id": 3, "name": "采集脚本", "issue_category": {"key": "tech"}, "desc": "<p>Node.js 实现</p>"}
+  ],
+  "comments": {"2": [{"id": 10, "content": "需要可追溯", "author": "评审人"}]},
+  "attachments": {"2": [{"id": 20, "fileName": "原型.pdf", "fileUrl": "http://example.test/prototype.pdf"}]}
+}
