@@ -36,7 +36,7 @@
 
 ## 说明
 
-- **实现映射**：本对照表定义的两条工作流已在 cospec 中实现为 `large-requirement-workflow`（大需求）与 `small-requirement-workflow`（小需求）两个 workflow entry skill，由 `brainstorming` 按需求规模路由。
+- **实现映射**：本对照表定义的两条工作流已在 cospec 中实现为 `large-requirement-workflow`（大需求）与 `small-requirement-workflow`（小需求）两个 workflow entry skill，由 `brainstorming` 询问用户选择后路由。
 - **step1 的 skill 名称**：本表沿用截图标签 `product-planning-prompt`；实际导入并调用的 skill 名称为 `product-planning-requirement-clarification`（`skills/product-planning-requirement-clarification/`）。两个工作流的 step1 均调用该 skill。
 - **大需求工作流**的 step2 包含多个研究/分析类 skill。本对照表沿用截图原始标注「竞品三个 skill 按需选择」；**实现中 step2 全部 5 个研究 skill 均为必选串行**（不做按需裁剪），缺少输入材料时由对应 skill 在执行过程中直接向用户索取。
 - **大需求工作流**的 step5 生成 TR2 相关产物：`tr2-epic-creator`（EPIC）、`tr2-feature-creator`（Feature）、`tr2-story-creator`（Story）、`tr2-tech-creator`（Tech 需求）。

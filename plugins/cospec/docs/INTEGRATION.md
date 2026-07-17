@@ -9,7 +9,7 @@
 cospec 是一个基于 **Skill** 的 AI 工作流插件：
 
 - **Skill**：放在 `skills/<skill-name>/SKILL.md` 的 Markdown 文件，前端带 YAML frontmatter，描述 AI Agent 的触发条件、行为契约和输出格式。
-- **主链（Pipeline）**：产品规划的标准流程，由 `brainstorming` 路由到合适的 workflow entry skill，再由 workflow entry skill 在主会话中串行调用各 leaf skill：
+- **主链（Pipeline）**：产品规划的标准流程，由 `brainstorming` 询问用户选择后路由到合适的 workflow entry skill，再由 workflow entry skill 在主会话中串行调用各 leaf skill：
 
 ```
 brainstorming
@@ -157,33 +157,33 @@ Skill("tr2-tech-creator")
 
 ### 2.6 调整路由规则
 
-`brainstorming` 是所有产品规划任务的唯一入口，它选择 workflow entry skill 并调用之。要调整入口判断逻辑：
+`brainstorming` 是所有产品规划任务的唯一入口，它询问用户选择 workflow 后调用之。要调整路由选项：
 
-1. 编辑 `skills/brainstorming/SKILL.md` 中 **Phase 2：路由分发** 的表格。
-2. 修改推荐的 workflow entry skill（`large-requirement-workflow` / `small-requirement-workflow` / 未来新增的 workflow）。
+1. 编辑 `skills/brainstorming/SKILL.md` 中 **路由流程** 的表格。
+2. 增删或修改 workflow 选项（`large-requirement-workflow` / `small-requirement-workflow` / 未来新增的 workflow）。
 3. 实际阶段编排和流转逻辑在对应的 workflow entry skill（如 `skills/large-requirement-workflow/SKILL.md`）中维护。
 
 ### 2.7 新增 `brainstorming` 出口（新增独立工作流）
 
-`brainstorming` 当前默认出口为 `large-requirement-workflow`，也支持 `small-requirement-workflow`。当你需要增加其它产品规划相关的工作流时，应该新建一个 workflow entry skill 并让 `brainstorming` 路由到它，而不是把逻辑塞进 `large-requirement-workflow`。
+`brainstorming` 当前提供两个出口：`large-requirement-workflow` 和 `small-requirement-workflow`。当你需要增加其它产品规划相关的工作流时，应该新建一个 workflow entry skill 并在 `brainstorming` 中注册为新的选项，而不是把逻辑塞进 `large-requirement-workflow`。
 
 示例：新增竞品分析工作流
 
 1. 新建 workflow entry skill：`skills/product-planning-with-competitor-workflow/SKILL.md`
 2. 在该 skill 内部编排 `product-planning-requirement-clarification`、`competitor-analysis`、`user-journey-design`、`tr1-requirements-spec` 等子 skill
-3. 编辑 `skills/brainstorming/SKILL.md` 的 Phase 2 路由表：
+3. 编辑 `skills/brainstorming/SKILL.md` 的路由表，增加新选项：
 
 ```markdown
-| 用户输入特征 | 推荐工作流 | 说明 |
-|-------------|-----------|------|
-| 产品规划相关 | → `large-requirement-workflow` | 需求澄清/旅程/TR1 主链 |
-| 要做竞品分析 | → `product-planning-with-competitor-workflow` | 带竞品分析的管线 |
-| 直接写 TR1 | → `small-requirement-workflow` | 直出 TR1 |
+| Workflow | 适用场景 | 产出 |
+|----------|---------|------|
+| `large-requirement-workflow` | 需要共创/客户/竞品研究，或要 TR2 产物 | TR1 + TR2（完整管线） |
+| `product-planning-with-competitor-workflow` | 要做竞品分析 | 带竞品分析的管线 |
+| `small-requirement-workflow` | 范围聚焦、无需研究/竞品 | TR1（精简管线） |
 ```
 
 4. 更新 `README.md`、`CLAUDE.md` 的架构图和 Skill 清单
 
-**原则**：`brainstorming` 判断任务类型并选择 workflow entry skill，workflow entry skill 编排子 skill。不要把不同 workflow 的阶段硬塞进 `large-requirement-workflow`。
+**原则**：`brainstorming` 提供选项让用户选择 workflow entry skill，workflow entry skill 编排子 skill。不要把不同 workflow 的阶段硬塞进 `large-requirement-workflow`。
 
 ---
 
@@ -291,7 +291,7 @@ cospec 支持通过 `cospec.config.json` 的 `kb` 字段接入产品知识库，
 
 ### 4.1 修改现有 Workflow Entry Skill
 
-当前 `brainstorming` 默认出口为 `large-requirement-workflow`。所有产品规划相关的新阶段都应该在对应的 workflow entry skill 内部编排，而不是直接接入 `brainstorming`。
+`brainstorming` 提供两个 workflow 出口（`large-requirement-workflow` / `small-requirement-workflow`），由用户选择。所有产品规划相关的新阶段都应该在对应的 workflow entry skill 内部编排，而不是直接接入 `brainstorming`。
 
 假设要在 `large-requirement-workflow` 的 `product-planning-requirement-clarification` 和 `user-journey-design` 之间新增一个 `competitor-analysis` 节点：
 
@@ -351,7 +351,7 @@ skills/product-planning-with-competitor-workflow/
 
 2. 在 `SKILL.md` 中声明本 workflow 的节点列表和串行调用步骤（参考 `large-requirement-workflow`）。
 
-3. 在 `skills/brainstorming/SKILL.md` 路由表中增加该 workflow 的触发条件。
+3. 在 `skills/brainstorming/SKILL.md` 路由表中增加该 workflow 的选项。
 
 4. 更新 `README.md`、`CLAUDE.md`、`docs/INTEGRATION.md`。
 
@@ -442,7 +442,7 @@ See `templates/user-requirement-template.md` for the default TR1 template.
 
 1. **结构检查**：`SKILL.md` 是否包含 `name` 和 `description` frontmatter。
 2. **行为测试**：参考 `skills/writing-skills/references/testing-skills-with-subagents.md`，使用子 agent 构造压力场景，观察无 skill 和有 skill 时的行为差异。
-3. **路由测试**：验证 `brainstorming` 能正确把用户意图路由到新 skill。
+3. **路由测试**：验证 `brainstorming` 能正确展示新 skill 选项并路由到新 skill。
 4. **配置测试**：如果涉及 `cospec.config.json`，验证 `cospec-configure` 能正确读写。
 
 ---
@@ -469,8 +469,8 @@ See `templates/user-requirement-template.md` for the default TR1 template.
 - [ ] 如需接入知识库，更新 `cospec.config.json` 的 `kb` 字段
 - [ ] 在 workflow skill 的 `SKILL.md` 中声明 Extension Points
 - [ ] 如需修改现有 workflow，更新对应的 workflow entry skill
-- [ ] 如需新增 workflow，新建 workflow entry skill 并在 `brainstorming` 路由表中注册
-- [ ] 如需调整入口判断，更新 `skills/brainstorming/SKILL.md` 路由表
+- [ ] 如需新增 workflow，新建 workflow entry skill 并在 `brainstorming` 路由表中注册为选项
+- [ ] 如需调整入口选项，更新 `skills/brainstorming/SKILL.md` 路由表
 - [ ] 更新 `README.md` 和 `CLAUDE.md` 的 Skill 清单与流程图
 - [ ] 使用 `writing-skills` 方法做行为测试
 - [ ] 检查插件元数据是否需要同步修改
