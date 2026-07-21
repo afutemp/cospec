@@ -1,3 +1,12 @@
+---
+cospec_artifact:
+  schema_version: 1
+  artifact_id: EPIC-{id}
+  artifact_type: epic
+  source_ids:
+    - EPIC-{id}
+---
+
 # EPIC
 
 > 💡 **层级映射**：需求规格说明书中每个“价值根特性（Root Feature）”（章节2.1~2.N）= 1个EPIC

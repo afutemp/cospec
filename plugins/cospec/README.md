@@ -1,6 +1,6 @@
 # cospec Plugin
 
-适用于 Claude Code 及兼容 AI Agent 的 AI 原生产品规划工作流插件。以 `brainstorming` 为产品规划入口，按需求规模路由到**大需求**或**小需求**两条工作流，串联需求澄清、共创/客户/竞品研究、用户旅程设计、TR1 需求说明书；大需求在 TR1 完成后可选调用 `generate-demo`，再进一步产出 TR2（EPIC/Feature/Story/Tech）。小需求在规划完成后可选调用 `generate-demo`。
+适用于 Claude Code 及兼容 AI Agent 的 AI 原生产品规划工作流插件。以 `brainstorming` 为产品规划入口，按需求规模路由到**大需求**或**小需求**两条工作流，串联需求澄清、共创/客户/竞品研究、用户旅程设计、TR1 需求说明书；大需求在 TR1 完成后可选调用 `generate-demo`，再进一步产出 TR2（EPIC/Feature/Story/Tech）。小需求在规划完成后可选调用 `generate-demo`。也可以独立使用 `sync-to-ipd` 将确认过的 TR1/TR2 预览并同步到 IPD。
 
 ## 工作流路由
 
@@ -29,6 +29,7 @@
 | 4 | **TR1 需求说明书** | `tr1-requirements-spec` | TR1 用户需求说明书（大需求评审版 + AI 上下文版 / 小需求评审版） |
 | TR1 后可选 | **Demo 生成** | `generate-demo` | 大需求在进入 TR2 前询问；小需求在规划完成后询问。用户确认文档和 dry-run 后返回 Frieren Demo handoff 链接 |
 | 5 | **TR2 产物**（仅大需求） | `tr2-epic-creator` / `tr2-feature-creator` / `tr2-story-creator` / `tr2-tech-creator` | EPIC / Feature / Story / Tech 需求文档（可追溯至 TR1 AI 上下文版） |
+| 独立 | **IPD 同步** | `sync-to-ipd` | 预览并确认后同步大需求 TR1/TR2，依赖 product-kb 的 `qianliu-ipd` |
 
 ## 安装
 
@@ -86,6 +87,12 @@ export FRIEREN_DEMO_HMAC_SECRET="<private-shared-secret>"
 
 Skill 会先执行不联网的 dry-run，并在真正发送前再次确认目标主机、文档清单和总大小。默认地址使用 HTTP，因此发送前会提示文档内容不受 TLS 保护。共享 HMAC 仅用于接口签名，不能替代用户确认或身份授权。
 
+### IPD 同步依赖
+
+`sync-to-ipd` 依赖 product-kb 插件中的 `qianliu-ipd`。IPD Token 由 `qianliu-ipd` 从 `~/.qianliu/config.json`、`QIANLIU_CONFIG_PATH` 或 `IPD_TOKEN` 读取；不要写入 cospec 配置或对话。
+
+调用 `/sync-to-ipd [大需求产物目录]` 或 `$sync-to-ipd [大需求产物目录]` 后，Skill 会选择已有产品、项目、版本、团队和 TR1 交付物，生成 `.ipd-sync/preview.md`，并仅在用户针对当前计划回复“确认执行”后写入。
+
 ## Skills 清单
 
 | Skill | 职责 |
@@ -95,6 +102,7 @@ Skill 会先执行不联网的 dry-run，并在真正发送前再次确认目标
 | `large-requirement-workflow` | 大需求工作流编排器：串行调用 12 个规划 leaf skill，在 TR1 完成后、TR2 开始前可选生成 Demo |
 | `small-requirement-workflow` | 小需求工作流编排器：串行调用 3 个规划 leaf skill，完成后可选生成 Demo |
 | `generate-demo` | 将用户确认的 cospec Markdown 产物签名提交到 Frieren Demo，并返回 handoff 链接；大需求在 TR1 后调用，小需求在工作流完成后调用 |
+| `sync-to-ipd` | 将大需求 TR1/TR2 生成稳定 manifest，经差异预览和计划哈希确认后委托 `qianliu-ipd` 同步 |
 | `product-kb-query` | 产品知识库查询：按需为 leaf skills 注入知识库上下文 |
 | `download-kb` | 下载预置知识库到当前工作目录（当前支持 `vdi`） |
 | `product-planning-requirement-clarification` | 需求澄清：原始想法 → "想全面"的澄清结果 |

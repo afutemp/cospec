@@ -114,6 +114,8 @@ Story 创建在父 Feature 目录下，与 Tech 平级：
 
 Story 文档使用模板：`assets/templates/Story.md`。
 
+Keep the template YAML frontmatter as the first block in the document. Use the primary `ST-*` as `artifact_id`; use the direct parent `FEAT-*` or parent `ST-*` as `parent_artifact_id`; and list every directly used traceability ID under `source_ids`. Do not derive IDs from filenames.
+
 输出文档必须包含以下结构：
 
 1. `1. 责任人`
@@ -184,10 +186,10 @@ EPIC
 - Story 过大时是否拆成 SubStory。
 - 输出目录和文件名是否符合 `EPIC-{epic-name}/Feature-{feature-name}/Story-{story-name}.md` 结构。
 - 是否使用 `assets/templates/Story.md` 的章节结构。
+- YAML frontmatter 是否包含唯一稳定的 `ST-*`、正确的 `artifact_type: story`、直接父级 ID 和完整 `source_ids`。
 
 ## Resources
 
 Templates:
 
 - Story 模板：`assets/templates/Story.md`
-

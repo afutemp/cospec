@@ -1,3 +1,14 @@
+---
+cospec_artifact:
+  schema_version: 1
+  artifact_id: ST-{id}
+  artifact_type: story
+  parent_artifact_id: FEAT-{parent-id}
+  source_ids:
+    - ST-{id}
+    - FEAT-{parent-id}
+---
+
 # Story
 
 > 💡 **层级映射**：需求规格说明书中“特性详细使用场景”（章节2.x.6）下的每个用户场景 = Story

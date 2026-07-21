@@ -1,3 +1,14 @@
+---
+cospec_artifact:
+  schema_version: 1
+  artifact_id: FEAT-{id}
+  artifact_type: feature
+  parent_artifact_id: EPIC-{parent-id}
+  source_ids:
+    - FEAT-{id}
+    - EPIC-{parent-id}
+---
+
 # Feature
 
 > 💡 **层级映射**：需求规格说明书中的“系统级主特性（SMF）”和“子特性（SF）”（章节2.x.1）= Feature

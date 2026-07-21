@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sync to IPD"
+  short_description: "安全预览并同步 cospec TR1/TR2 到 IPD"
+  default_prompt: "Use $sync-to-ipd to preview and synchronize selected cospec TR1 and TR2 deliverables to IPD."
