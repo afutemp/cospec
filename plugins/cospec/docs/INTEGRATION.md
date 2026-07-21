@@ -191,7 +191,7 @@ Skill("tr2-tech-creator")
 
 cospec 支持通过 `cospec.config.json` 的 `kb` 字段接入产品知识库，并默认启用 `product-kb-query` skill 在调用 leaf skills 前统一注入 KB 上下文。
 
-**默认不内置任何具体知识库内容**。插件提供 `product-kb-server` skill，用于通过 kb-server REST API 把知识库文档下载到当前工作目录。
+**默认不内置任何具体知识库内容**。插件提供 `product-kb-server` skill，用于通过 kb-server REST API 把知识库文档下载到全局目录 `~/.cospec/kb/`（也可通过 `--output` 指定任意本地目录）。
 
 ### 3.1 下载知识库
 
@@ -201,18 +201,18 @@ cospec 支持通过 `cospec.config.json` 的 `kb` 字段接入产品知识库，
 # 1. 列出所有知识库
 /product-kb-server list
 
-# 2. 下载用户选择的知识库
-/product-kb-server download --kb <kb-name-or-id> --output ./<kb-name>-kb
+# 2. 下载用户选择的知识库（默认保存到 ~/.cospec/kb/<kb-name>/）
+/product-kb-server download --kb <kb-name-or-id>
 ```
 
-执行 `download` 后会将知识库的 `raw/` 文档内容解压到 `--output` 指定的目录下。
+执行 `download` 后会将知识库的 `raw/` 文档内容解压到默认全局目录，或 `--output` 指定的目录下。
 
 ### 3.2 配置方式
 
 `download` 命令执行完毕后会**自动配置**插件根目录的 `cospec.config.json`：
 
 - `kb.skill` 设置为 `product-kb-query`（若当前为 `null` 或未设置）
-- `kb.localPath` 设置为 `--output` 目录的绝对路径
+- `kb.localPath` 设置为下载目录的绝对路径（默认 `~/.cospec/kb/<kb-name>/`）
 
 下载完成后无需手动修改配置。如果你需要调整，可以编辑 `cospec.config.json`：
 
@@ -220,12 +220,12 @@ cospec 支持通过 `cospec.config.json` 的 `kb` 字段接入产品知识库，
 {
   "kb": {
     "skill": "product-kb-query",
-    "localPath": "<kb-name>-kb/"
+    "localPath": "~/.cospec/kb/<kb-name>/"
   }
 }
 ```
 
-`kb.localPath` 默认为 `null`（不启用文件型 KB）。配置后 `product-kb-query` 仅使用该路径，不做自动探测。**推荐先运行 `/product-kb-server list` 获取可用知识库，再运行 `/product-kb-server download --kb <kb-name-or-id> --output ./<kb-name>-kb` 自动下载并配置。**
+`kb.localPath` 默认为 `null`（不启用文件型 KB）。配置后 `product-kb-query` 仅使用该路径，不做自动探测。**推荐先运行 `/product-kb-server list` 获取可用知识库，再运行 `/product-kb-server download --kb <kb-name-or-id>` 自动下载并配置。**
 
 | 字段 | 说明 |
 | :--- | :--- |
@@ -292,7 +292,7 @@ cospec 支持通过 `cospec.config.json` 的 `kb` 字段接入产品知识库，
 `product-kb-server` 通过调用 kb-server 的 `/api/kb/:id/download` 接口获取知识库归档。要增加新的知识库来源：
 
 1. 确保 kb-server 中已存在对应知识库名称（name）或 ID。
-2. 使用 `/product-kb-server download --kb <name-or-id> --output ./<dir>` 下载。
+2. 使用 `/product-kb-server download --kb <name-or-id>` 下载（默认保存到 `~/.cospec/kb/<name>/`，也可使用 `--output <dir>` 指定目录）。
 3. 更新 README、CLAUDE.md 中 `product-kb-server` 的职责说明。
 
 ---

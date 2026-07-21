@@ -14,7 +14,7 @@ const USAGE = `Usage: product-kb-server <command> [options]
 
 Commands:
   list                          List all knowledge bases
-  download --kb <name> --output <dir> [--format tar.gz|zip]
+  download --kb <name> [--output <dir>] [--format tar.gz|zip]
   upload   --kb <name> --files <glob> [--token <tok>]
 
 Options:
@@ -23,6 +23,7 @@ Options:
 
 Examples:
   product-kb-server list
+  product-kb-server download --kb <kb-name-or-id>
   product-kb-server download --kb <kb-name-or-id> --output ./docs
   product-kb-server upload --kb <kb-name-or-id> --files "./docs/*.md"
 `;
@@ -46,6 +47,42 @@ function parseArgs(args) {
 
 function authHeaders(token) {
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+// ════════════════════════════════════════════
+// Global KB cache helpers
+// ════════════════════════════════════════════
+function getPluginRoot() {
+  // scripts/ → product-kb-server/ → skills/ → cospec/
+  return path.resolve(__dirname, '../../..');
+}
+
+function getPluginName() {
+  return path.basename(getPluginRoot());
+}
+
+function getGlobalKbRoot() {
+  return path.join(os.homedir(), `.${getPluginName()}`, 'kb');
+}
+
+function sanitizeKbName(name) {
+  if (!name) return 'unnamed-kb';
+  let safe = name
+    .replace(/[\/\\:?*"<\>\|\x00-\x1f\s]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^[-.]+|[-.]+$/g, '');
+  if (!safe || safe === '.' || safe === '..') safe = 'unnamed-kb';
+  return safe;
+}
+
+function getDefaultKbDir(kbName) {
+  return path.join(getGlobalKbRoot(), sanitizeKbName(kbName));
+}
+
+function isManagedGlobalPath(targetPath) {
+  const resolved = path.resolve(targetPath);
+  const root = path.resolve(getGlobalKbRoot());
+  return resolved === root || resolved.startsWith(root + path.sep);
 }
 
 // ── KB resolution ──
@@ -78,7 +115,8 @@ async function cmdDownload(opts) {
   const kb = await resolveKb(opts.server, opts.token, opts.kb);
   if (!kb) throw new Error(`KB '${opts.kb}' not found. Run 'list' to see available KBs.`);
 
-  console.log(`[download] ${kb.name} (${kb.id}) → ${opts.output}`);
+  const outputDir = opts.output || getDefaultKbDir(kb.name);
+  console.log(`[download] ${kb.name} (${kb.id}) → ${outputDir}`);
 
   const url = `${opts.server}/api/kb/${kb.id}/download?format=${opts.format}`;
   const res = await fetch(url, { headers: authHeaders(opts.token) });
@@ -89,7 +127,13 @@ async function cmdDownload(opts) {
 
   const buf = Buffer.from(await res.arrayBuffer());
   const tmp = path.join(os.tmpdir(), `kb-dl-${kb.id}`);
-  fs.mkdirSync(opts.output, { recursive: true });
+
+  // For managed global directories, remove the existing copy so that a
+  // re-download produces a clean overwrite and stale files are eliminated.
+  if (isManagedGlobalPath(outputDir)) {
+    fs.rmSync(outputDir, { recursive: true, force: true });
+  }
+  fs.mkdirSync(outputDir, { recursive: true });
 
   try {
     if (opts.format === 'zip') {
@@ -104,12 +148,12 @@ async function cmdDownload(opts) {
     }
 
     const kbRoot = detectKbRoot(tmp);
-    copyDir(kbRoot, opts.output);
+    copyDir(kbRoot, outputDir);
 
-    const count = countFiles(opts.output);
-    console.log(`[download] done — ${count} documents in ${opts.output}`);
+    const count = countFiles(outputDir);
+    console.log(`[download] done — ${count} documents in ${outputDir}`);
 
-    const configResult = configureKbLocalPath(opts.output);
+    const configResult = configureKbLocalPath(outputDir);
     if (configResult.ok) {
       console.log(`[config] updated ${configResult.file}`);
       console.log(`[config] kb.localPath = ${configResult.localPath}`);
@@ -168,8 +212,7 @@ function findDir(root, name) {
 // Auto-configure cospec.config.json
 // ════════════════════════════════════════════
 function configureKbLocalPath(outputDir) {
-  // Plugin root: scripts/ → product-kb-server/ → skills/ → cospec/
-  const pluginRoot = path.resolve(__dirname, '../../..');
+  const pluginRoot = getPluginRoot();
   const configPath = path.join(pluginRoot, 'cospec.config.json');
 
   let config = {};
@@ -199,20 +242,6 @@ function configureKbLocalPath(outputDir) {
   }
 
   return { ok: true, file: configPath, localPath: absPath };
-}
-
-function findDir(root, name) {
-  const queue = [root];
-  while (queue.length) {
-    const dir = queue.shift();
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      if (entry.isDirectory()) {
-        if (entry.name === name) return path.join(dir, entry.name);
-        queue.push(path.join(dir, entry.name));
-      }
-    }
-  }
-  return null;
 }
 
 function copyDir(src, dest) {

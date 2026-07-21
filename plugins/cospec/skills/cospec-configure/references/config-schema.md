@@ -30,7 +30,7 @@ cospec.config.json (non-null value)
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `skill` | string \| null | `"product-kb-query"` | Replace the default KB query method with your own skill name. Set to `null` to disable skill-based KB lookup. |
-| `localPath` | string \| null | `null` | Local knowledge base directory for file-based lookups. Set to `null` to disable file-based lookup. Set to a path (relative to plugin root or absolute) to configure file-based KB access. |
+| `localPath` | string \| null | `null` | Local knowledge base directory for file-based lookups. Set to `null` to disable file-based lookup. Set to a path (relative to plugin root or absolute) to configure file-based KB access. When using `product-kb-server download` without `--output`, it is automatically set to `~/.cospec/kb/<kb-name>/`. |
 
 **KB discovery order:**
 

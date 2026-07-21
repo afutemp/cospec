@@ -61,14 +61,21 @@ TOKEN=$(curl -s -X POST $KB_SERVER_URL/api/auth/login \
 
 ```bash
 ./skills/product-kb-server/scripts/product-kb-server.cjs download \
+  --kb <kb-name-or-id>
+# 默认解压到 ~/.cospec/kb/<kb-name>/
+```
+
+如果需要自定义本地目录，仍可使用 `--output`：
+
+```bash
+./skills/product-kb-server/scripts/product-kb-server.cjs download \
   --kb <kb-name-or-id> --output ./docs
-# 解压后目录结构：./docs/README.md、./docs/search-index.md、./docs/00-综述/*.md ...
 ```
 
 `download` 命令完成后会**自动配置**插件根目录的 `cospec.config.json`：
 
 - 设置 `kb.skill` 为 `product-kb-query`（仅在未设置时）
-- 设置 `kb.localPath` 为 `--output` 目录的绝对路径
+- 设置 `kb.localPath` 为下载目录的绝对路径（默认 `~/.cospec/kb/<kb-name>/`）
 
 用户无需手动修改配置即可使用 `product-kb-query`。
 
@@ -90,6 +97,7 @@ TOKEN=$(curl -s -X POST $KB_SERVER_URL/api/auth/login \
 # 方式二：环境变量
 export KB_SERVER_URL=http://10.6.100.230
 export KB_AUTH_TOKEN=kb_key_xxxxxxxxxxxxxxxx
+./skills/product-kb-server/scripts/product-kb-server.cjs download --kb <kb-name-or-id>
 ./skills/product-kb-server/scripts/product-kb-server.cjs download --kb <kb-name-or-id> --output ./docs
 ```
 
