@@ -2,7 +2,7 @@
   "name": "cospec",
   "displayName": "cospec",
   "description": "AI 原生产品规划工作流：TR1/TR2 文档生成及 Frieren Demo 生成",
-  "version": "1.1.0",
+  "version": "1.0.6",
   "author": { "name": "afutemp" },
   "license": "MIT",
   "skills": "./skills/",
