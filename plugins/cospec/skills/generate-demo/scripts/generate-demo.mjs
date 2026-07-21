@@ -11,6 +11,8 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export const HANDOFF_PATH = '/api/integrations/workflows/handoff';
+export const DEFAULT_FRIEREN_DEMO_BASE_URL = 'http://ui.sangfor.com.cn/';
+const DEFAULT_FRIEREN_DEMO_HMAC_SECRET = "47b75743bf6a5d30e7dbf4bf1c85aa9f3cbc6d71659f7b76dc96433aeb29f358";
 export const MAX_DOCUMENTS = 20;
 export const MAX_DOCUMENT_BYTES = 2 * 1024 * 1024;
 export const MAX_TOTAL_DOCUMENT_BYTES = 10 * 1024 * 1024;
@@ -196,18 +198,12 @@ export function createDemoSignature({ timestamp, method = 'POST', handoffPath = 
 }
 
 function getEnvironment(env) {
-  const baseUrl = String(env.FRIEREN_DEMO_BASE_URL || '').trim();
-  const secret = String(env.FRIEREN_DEMO_HMAC_SECRET || '').trim();
-  if (!baseUrl) {
-    throw new DemoGenerationError('FRIEREN_DEMO_BASE_URL is not configured.', {
-      code: 'missing_base_url',
-    });
-  }
-  if (!secret) {
-    throw new DemoGenerationError('FRIEREN_DEMO_HMAC_SECRET is not configured.', {
-      code: 'missing_hmac_secret',
-    });
-  }
+  const baseUrl = String(
+    env.FRIEREN_DEMO_BASE_URL || DEFAULT_FRIEREN_DEMO_BASE_URL,
+  ).trim();
+  const secret = String(
+    env.FRIEREN_DEMO_HMAC_SECRET || DEFAULT_FRIEREN_DEMO_HMAC_SECRET,
+  ).trim();
   return { baseUrl, secret };
 }
 

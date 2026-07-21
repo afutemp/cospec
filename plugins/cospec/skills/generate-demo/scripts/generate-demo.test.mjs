@@ -198,20 +198,36 @@ test('rejects an invalid success response', async (t) => {
   }), { code: 'invalid_response_data' });
 });
 
-test('fails closed when required environment variables are missing', async (t) => {
+test('uses bundled Frieren configuration when environment variables are missing', async (t) => {
   const root = await createWorkspace(t);
   const document = await writeMarkdown(root, 'review.md', '# Review\n');
 
-  await assert.rejects(prepareDemoRequest({
+  const prepared = await prepareDemoRequest({
     documentPaths: [document],
     cwd: root,
-    env: { FRIEREN_DEMO_HMAC_SECRET: 'test-secret' },
-  }), { code: 'missing_base_url' });
-  await assert.rejects(prepareDemoRequest({
+    env: {},
+  });
+
+  assert.equal(prepared.baseUrl, 'http://ui.sangfor.com.cn/');
+  assert.equal(prepared.requestUrl, 'http://ui.sangfor.com.cn/api/integrations/workflows/handoff');
+  assert.equal(prepared.secret.length > 0, true);
+});
+
+test('environment variables override bundled Frieren configuration', async (t) => {
+  const root = await createWorkspace(t);
+  const document = await writeMarkdown(root, 'review.md', '# Review\n');
+
+  const prepared = await prepareDemoRequest({
     documentPaths: [document],
     cwd: root,
-    env: { FRIEREN_DEMO_BASE_URL: 'https://demo.example.com/' },
-  }), { code: 'missing_hmac_secret' });
+    env: {
+      FRIEREN_DEMO_BASE_URL: 'https://demo.example.com/',
+      FRIEREN_DEMO_HMAC_SECRET: 'override-secret',
+    },
+  });
+
+  assert.equal(prepared.baseUrl, 'https://demo.example.com/');
+  assert.equal(prepared.secret, 'override-secret');
 });
 
 test('rejects invalid file selections', async (t) => {

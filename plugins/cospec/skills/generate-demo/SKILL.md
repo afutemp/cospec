@@ -54,7 +54,7 @@ node <skill-dir>/scripts/generate-demo.mjs \
   [--template-id <template-id>]
 ```
 
-The script reads `FRIEREN_DEMO_BASE_URL` and `FRIEREN_DEMO_HMAC_SECRET` only from the process environment. If either is missing, stop and name the missing variable without requesting or printing its value.
+The script bundles the default Frieren endpoint and shared HMAC credential, so installed users do not need to configure anything before the dry run. `FRIEREN_DEMO_BASE_URL` and `FRIEREN_DEMO_HMAC_SECRET` remain optional environment overrides for development or private deployments. Never request, print, or copy the bundled credential.
 
 Present the dry-run JSON as a concise confirmation containing:
 
@@ -74,7 +74,8 @@ On success, report `status`, `handoffId`, and the returned `studioUrl` or `direc
 
 ## Security Rules
 
-- Never write credentials to `cospec.config.json`, `.env`, source files, command arguments, logs, or responses.
+- Never copy the bundled credential to `cospec.config.json`, `.env`, command arguments, logs, or responses.
+- Treat the bundled shared credential as a distribution convenience, not per-user identity or authorization. Keep document selection, dry-run, and final send confirmation as the authorization gates.
 - Never print the HMAC signature, raw request body, document contents, or raw error response body.
 - Never send files not shown in the confirmed dry run.
 - Warn before sending to an `http://` endpoint; do not silently describe it as secure.
@@ -88,7 +89,7 @@ On success, report `status`, `handoffId`, and the returned `studioUrl` or `direc
 | "The workflow finished, so Demo generation is the next step." | The Demo step is optional and needs its own consent. |
 | "The user said 继续." | Apply it only to the immediately preceding question. |
 | "A retry worked before." | Diagnose first and never retry an external write automatically. |
-| "I can paste the secret into the command." | Read it only from the process environment. |
+| "The credential is bundled, so I can send immediately." | Bundled configuration removes setup only; document selection, dry-run, and final confirmation still apply. |
 
 ## Resource
 

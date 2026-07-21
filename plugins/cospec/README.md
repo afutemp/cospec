@@ -75,16 +75,16 @@
 "project": { "product": "SCP" }
 ```
 
-### Demo 生成环境变量
+### Demo 生成配置
 
-`generate-demo` 不从 `cospec.config.json` 读取凭据。运行 Agent 的进程环境必须提供：
+`generate-demo` 已内置默认 Frieren 地址和共享 HMAC，插件安装后无需手动配置。开发调试或私有部署可用进程环境变量覆盖内置值：
 
 ```bash
-export FRIEREN_DEMO_BASE_URL="https://demo.example.com/"
-export FRIEREN_DEMO_HMAC_SECRET="<shared-secret>"
+export FRIEREN_DEMO_BASE_URL="https://private-demo.example.com/"
+export FRIEREN_DEMO_HMAC_SECRET="<private-shared-secret>"
 ```
 
-Skill 会先执行不联网的 dry-run，并在真正发送前再次确认目标主机、文档清单和总大小。不要把真实密钥写入仓库或聊天记录。
+Skill 会先执行不联网的 dry-run，并在真正发送前再次确认目标主机、文档清单和总大小。默认地址使用 HTTP，因此发送前会提示文档内容不受 TLS 保护。共享 HMAC 仅用于接口签名，不能替代用户确认或身份授权。
 
 ## Skills 清单
 
