@@ -364,6 +364,10 @@ skills/product-planning-with-competitor-workflow/
 3. 用户通过直接调用 skill 名称使用，例如 `/skill code-review`。
 4. 如果需要在会话启动时自动引导，参考 `using-spec-developer` 的模式。
 
+`generate-demo` 属于独立能力，但也可由大／小需求工作流在明确节点调用。它不接入 `brainstorming` 路由：大需求 workflow entry skill 在 TR1 文档完成后、TR2 开始前单独询问用户是否生成 Demo；小需求仍在全部规划节点完成后询问。只有用户同意后，才能把本次运行记录的准确产物路径传给 `generate-demo`。
+
+需要向外部服务发送文档的 Skill 必须采用“选择文件 → dry-run → 确认发送”门禁。凭据只从进程环境读取，不写入 `cospec.config.json`；脚本不得输出签名、原始请求正文、文档内容或原始错误响应。
+
 ### 4.4 新增配置项
 
 如果新 skill 需要可配置项：
@@ -394,6 +398,9 @@ skills/<skill-name>/
 │   ├── Output Contract
 │   └── Resources
 ├── README.zh.md                   # 可选，中文人工参考
+├── agents/                        # 可选，Codex UI 元数据
+│   └── openai.yaml
+├── scripts/                       # 可选，确定性执行和验证脚本
 ├── assets/                        # 可选，模板、图片、示例
 │   └── templates/
 └── references/                    # 可选，skill 引用的辅助文档
@@ -442,7 +449,7 @@ See `templates/user-requirement-template.md` for the default TR1 template.
 
 1. **结构检查**：`SKILL.md` 是否包含 `name` 和 `description` frontmatter。
 2. **行为测试**：参考 `skills/writing-skills/references/testing-skills-with-subagents.md`，使用子 agent 构造压力场景，观察无 skill 和有 skill 时的行为差异。
-3. **路由测试**：验证 `brainstorming` 能正确展示新 skill 选项并路由到新 skill。
+3. **路由测试**：只有新增或修改产品规划入口时，才验证 `brainstorming` 的选项和路由；独立 Skill 不应接入 `brainstorming`。
 4. **配置测试**：如果涉及 `cospec.config.json`，验证 `cospec-configure` 能正确读写。
 
 ---

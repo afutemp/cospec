@@ -1,7 +1,7 @@
 {
   "name": "cospec",
-  "version": "1.0.5",
-  "description": "AI 原生产品规划工作流：需求澄清、用户旅程设计、TR1 用户需求说明书生成，支持 DAG 并行文档生成扩展",
+  "version": "1.1.0",
+  "description": "AI 原生产品规划工作流：TR1/TR2 文档生成及 Frieren Demo 生成",
   "author": {
     "name": "afutemp"
   },
@@ -15,6 +15,8 @@
     "tr1",
     "workflow",
     "clarification",
+    "demo-generation",
+    "frieren",
     "dag",
     "skills"
   ],
@@ -22,7 +24,7 @@
   "interface": {
     "displayName": "cospec",
     "shortDescription": "AI 原生产品规划工作流",
-    "longDescription": "cospec 提供需求澄清、用户旅程设计、TR1 用户需求说明书生成等产品规划能力，并预留 DAG 并行文档生成扩展机制。",
+    "longDescription": "cospec 提供需求澄清、用户旅程设计和 TR1/TR2 文档生成能力，并支持将用户确认的 Markdown 安全提交到 Frieren Demo。",
     "developerName": "afutemp",
     "category": "Productivity",
     "capabilities": ["Read", "Write"],
@@ -30,7 +32,8 @@
     "defaultPrompt": [
       "使用 cospec 澄清这个需求",
       "使用 cospec 设计用户旅程",
-      "使用 cospec 生成 TR1 需求说明书"
+      "使用 cospec 生成 TR1 需求说明书",
+      "使用 generate-demo 从已确认的需求文档生成 Demo"
     ]
   }
 }
