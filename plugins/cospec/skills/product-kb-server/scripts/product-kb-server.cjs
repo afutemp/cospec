@@ -5,7 +5,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
-const zlib = require('node:zlib');
+const { execSync } = require('node:child_process');
 
 const KB_SERVER_URL = (process.env.KB_SERVER_URL ?? 'http://10.6.100.230').replace(/\/$/, '');
 const AUTH_TOKEN = process.env.KB_AUTH_TOKEN ?? '';
@@ -93,27 +93,18 @@ async function cmdDownload(opts) {
 
   try {
     if (opts.format === 'zip') {
-      // Use system unzip (available on Linux/macOS; Windows users need unzip in PATH)
-      const { execSync } = require('node:child_process');
       const zipPath = path.join(tmp, '_archive.zip');
       fs.mkdirSync(tmp, { recursive: true });
       fs.writeFileSync(zipPath, buf);
       execSync(`unzip -o "${zipPath}" -d "${tmp}"`, { stdio: 'ignore' });
       fs.unlinkSync(zipPath);
     } else {
-      extractTarGz(buf, tmp);
+      fs.mkdirSync(tmp, { recursive: true });
+      execSync(`tar -xzf - -C "${tmp}"`, { input: buf, stdio: ['pipe', 'ignore', 'ignore'] });
     }
 
-    // Flatten: find raw/ and copy contents to output
-    const rawDir = findDir(tmp, 'raw');
-    if (rawDir) {
-      copyDir(rawDir, opts.output);
-    } else {
-      for (const e of fs.readdirSync(tmp, { withFileTypes: true })) {
-        if (e.name === 'manifest.json') continue;
-        copyDir(path.join(tmp, e.name), path.join(opts.output, e.name));
-      }
-    }
+    const kbRoot = detectKbRoot(tmp);
+    copyDir(kbRoot, opts.output);
 
     const count = countFiles(opts.output);
     console.log(`[download] done — ${count} documents in ${opts.output}`);
@@ -128,6 +119,49 @@ async function cmdDownload(opts) {
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
+}
+
+// ════════════════════════════════════════════
+// KB root detection
+// ════════════════════════════════════════════
+function detectKbRoot(extractedDir) {
+  // 1. Prefer an explicit raw/ directory if present.
+  const rawDir = findDir(extractedDir, 'raw');
+  if (rawDir && hasKnowledgeBaseFiles(rawDir)) return rawDir;
+
+  // 2. If the archive has a single top-level directory that looks like a KB root,
+  //    use its contents (e.g. vdi-kb/README.md, vdi-kb/00-综述/...).
+  const entries = fs.readdirSync(extractedDir, { withFileTypes: true });
+  const dirs = entries.filter(e => e.isDirectory() && e.name !== '__MACOSX');
+  if (dirs.length === 1 && !entries.some(e => e.isFile())) {
+    const candidate = path.join(extractedDir, dirs[0].name);
+    if (hasKnowledgeBaseFiles(candidate)) return candidate;
+  }
+
+  // 3. Otherwise use the extracted root as-is.
+  return extractedDir;
+}
+
+function hasKnowledgeBaseFiles(dir) {
+  try {
+    return countFiles(dir) > 0 || fs.readdirSync(dir).some(n => n.endsWith('.md'));
+  } catch {
+    return false;
+  }
+}
+
+function findDir(root, name) {
+  const queue = [root];
+  while (queue.length) {
+    const dir = queue.shift();
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (entry.name === name) return path.join(dir, entry.name);
+        queue.push(path.join(dir, entry.name));
+      }
+    }
+  }
+  return null;
 }
 
 // ════════════════════════════════════════════
@@ -165,36 +199,6 @@ function configureKbLocalPath(outputDir) {
   }
 
   return { ok: true, file: configPath, localPath: absPath };
-}
-
-// ── Minimal tar.gz extraction (zero deps, USTAR format) ──
-function extractTarGz(buf, dest) {
-  const gunzip = zlib.gunzipSync(buf);
-  let offset = 0;
-
-  while (offset + 512 <= gunzip.length) {
-    const header = gunzip.slice(offset, offset + 512);
-    if (header.every(b => b === 0)) break;
-
-    const name = readTarStr(header, 0, 100);
-    if (!name) { offset += 512; continue; }
-
-    const size = parseInt(readTarStr(header, 124, 12), 8) || 0;
-    offset += 512;
-
-    if (!name.endsWith('/') && size > 0) {
-      const filePath = path.join(dest, name);
-      fs.mkdirSync(path.dirname(filePath), { recursive: true });
-      fs.writeFileSync(filePath, gunzip.slice(offset, offset + size));
-    }
-    offset += Math.ceil(size / 512) * 512;
-  }
-}
-
-function readTarStr(buf, start, len) {
-  let end = start;
-  while (end < start + len && buf[end] !== 0) end++;
-  return buf.slice(start, end).toString('utf8');
 }
 
 function findDir(root, name) {

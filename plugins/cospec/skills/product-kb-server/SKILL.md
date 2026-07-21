@@ -62,7 +62,7 @@ TOKEN=$(curl -s -X POST $KB_SERVER_URL/api/auth/login \
 ```bash
 ./skills/product-kb-server/scripts/product-kb-server.cjs download \
   --kb <kb-name-or-id> --output ./docs
-# 解压后目录结构：./docs/<kb-name>/raw/*.md
+# 解压后目录结构：./docs/README.md、./docs/search-index.md、./docs/00-综述/*.md ...
 ```
 
 `download` 命令完成后会**自动配置**插件根目录的 `cospec.config.json`：
