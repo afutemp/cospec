@@ -1,0 +1,4 @@
+interface:
+  display_name: "Generate Demo"
+  short_description: "从已确认的 cospec Markdown 生成 Frieren Demo"
+  default_prompt: "Use $generate-demo to generate a Frieren Demo from selected cospec Markdown deliverables."

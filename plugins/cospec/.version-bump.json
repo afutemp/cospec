@@ -12,7 +12,8 @@
       "RELEASE-NOTES.md",
       ".git",
       ".version-bump.json",
-      "scripts/bump-version.sh"
+      "scripts/bump-version.sh",
+      "DFX自检_开放性.md"
     ]
   }
 }

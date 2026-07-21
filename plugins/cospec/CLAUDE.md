@@ -21,8 +21,9 @@ Before you make changes to this repo, you MUST:
 |-------|---------|
 | `using-spec-developer` | Session start — teaches how to use skills |
 | `brainstorming` | ALL product planning work — asks user which workflow, then dispatches |
-| `large-requirement-workflow` | Dispatched by `brainstorming` for the full large-requirement pipeline (research + TR1 + TR2) |
-| `small-requirement-workflow` | Dispatched by `brainstorming` for small requirements (clarify + journey + TR1 only) |
+| `large-requirement-workflow` | Dispatched by `brainstorming` for the full large-requirement pipeline; offers the optional Demo handoff after TR1 and before TR2 |
+| `small-requirement-workflow` | Dispatched by `brainstorming` for small requirements (clarify + journey + TR1), followed by an optional Demo handoff |
+| `generate-demo` | Direct invocation, explicit opt-in after large-requirement TR1, or opt-in after a small-requirement workflow; sends only user-confirmed Markdown |
 
 ### Pipeline
 
@@ -34,8 +35,8 @@ Before you make changes to this repo, you MUST:
     ▼
 brainstorming（路由器：询问用户选择 → 确认 → 分发）
     │
-    ├─ 大需求 ──→ large-requirement-workflow   （串行调用 12 个 leaf skill）
-    └─ 小需求 ──→ small-requirement-workflow   （串行调用 3 个 leaf skill）
+    ├─ 大需求 ──→ 澄清／研究／旅程／TR1 ──→ 可选 generate-demo ──→ TR2
+    └─ 小需求 ──→ 澄清／旅程／TR1 ──→ 可选 generate-demo
 ```
 
 `brainstorming` 将路由决定权完全交由用户：
@@ -53,6 +54,7 @@ brainstorming（路由器：询问用户选择 → 确认 → 分发）
 | 2 | **研究/分析**（仅大需求，5 个串行） | `co-create-customer-minutes-analysis` / `customer-experience-feedback-analysis-v2` / `competitor-feature-research` / `competitor-pain-points` / `competitor-problem-solving` | 共创验证 / 客户体验反馈 / 竞品分析报告 |
 | 3 | **用户旅程设计** | `user-journey-design` | 用户旅程设计文档（需求背景、方案设计、未来旅程、目标达成分析） |
 | 4 | **TR1 需求说明书** | `tr1-requirements-spec` | TR1 用户需求说明书（大需求评审版 + AI 上下文版 / 小需求评审版） |
+| TR1 后可选 | **Demo 生成** | `generate-demo` | 大需求在进入 TR2 前询问；小需求在规划完成后询问。用户选择并确认的 Markdown → Frieren Demo handoff |
 | 5 | **TR2 产物**（仅大需求） | `tr2-epic-creator` / `tr2-feature-creator` / `tr2-story-creator` / `tr2-tech-creator` | EPIC / Feature / Story / Tech 需求文档 |
 
 ### Skill List
@@ -61,8 +63,9 @@ brainstorming（路由器：询问用户选择 → 确认 → 分发）
 |-------|------|
 | `using-spec-developer` | 入口引导：如何使用 skill |
 | `brainstorming` | 中央路由器：询问用户选择 workflow，确认后分发 |
-| `large-requirement-workflow` | 大需求工作流编排器：串行调用 12 个 leaf skill（澄清 → 研究 → 旅程 → TR1 → TR2） |
-| `small-requirement-workflow` | 小需求工作流编排器：串行调用 3 个 leaf skill（澄清 → 旅程 → TR1） |
+| `large-requirement-workflow` | 大需求工作流编排器：TR1 完成后可选生成 Demo，再继续 TR2 |
+| `small-requirement-workflow` | 小需求工作流编排器：串行调用 3 个规划 leaf skill，完成后可选生成 Demo |
+| `generate-demo` | 独立调用、大需求 TR1 后调用或小需求工作流后调用：确认文件、dry-run、签名提交并返回 Demo 链接 |
 | `product-kb-query` | 产品知识库查询：为 leaf skills 按需注入知识库上下文 |
 | `download-kb` | 下载预置知识库到当前工作目录（当前支持 `vdi`） |
 | `product-planning-requirement-clarification` | 需求澄清：原始想法 → "想全面"的澄清结果 |

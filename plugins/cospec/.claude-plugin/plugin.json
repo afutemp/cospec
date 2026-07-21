@@ -1,7 +1,7 @@
 {
   "name": "cospec",
-  "description": "AI 原生产品规划工作流：需求澄清、用户旅程设计、TR1 用户需求说明书生成",
-  "version": "1.0.5",
+  "description": "AI 原生产品规划工作流：TR1/TR2 文档生成及 Frieren Demo 生成",
+  "version": "1.0.6",
   "author": {
     "name": "afutemp"
   },
@@ -15,6 +15,8 @@
     "user-journey",
     "tr1",
     "workflow",
-    "clarification"
+    "clarification",
+    "demo-generation",
+    "frieren"
   ]
 }
