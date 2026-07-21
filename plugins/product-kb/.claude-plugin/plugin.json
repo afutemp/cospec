@@ -1,5 +1,5 @@
 {
   "name": "product-kb",
-  "version": "0.1.1",
+  "version": "0.1.0",
   "description": "Claude Code plugin for product knowledge bases and safe cospec-to-IPD synchronization"
 }

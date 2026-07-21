@@ -17,7 +17,7 @@ const { URL } = require('url');
 const IPD_BASE_URL    = 'http://ipd.sangfor.com';
 const IPD_PORTAL_URL  = 'https://ipd.atrust.sangfor.com';   // 用户可见的平台链接
 const API_BASE        = `${IPD_BASE_URL}/api`;
-const USER_AGENT      = 'qianliu-ipd/1.19.0';
+const USER_AGENT      = 'qianliu-ipd/1.18.0';
 
 /** 拼接需求详情 URL（带产品 ID） */
 function buildIssueUrl(issueId, productId) {

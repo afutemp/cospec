@@ -69,7 +69,7 @@ brainstorming（路由器：询问用户选择 → 确认 → 分发）
 | `generate-demo` | 独立调用、大需求 TR1 后调用或小需求工作流后调用：确认文件、dry-run、签名提交并返回 Demo 链接 |
 | `sync-to-ipd` | 独立调用：发现大需求产物、选择 IPD 目标、生成差异预览并在最终确认后同步 |
 | `product-kb-query` | 产品知识库查询：为 leaf skills 按需注入知识库上下文 |
-| `download-kb` | 下载预置知识库到当前工作目录（当前支持 `vdi`） |
+| `product-kb-server` | 通过 kb-server REST API 管理知识库：列出、下载文档到本地、上传附件 |
 | `product-planning-requirement-clarification` | 需求澄清：原始想法 → "想全面"的澄清结果 |
 | `co-create-customer-minutes-analysis` | 共创客户纪要分析（验证报告） |
 | `customer-experience-feedback-analysis-v2` | 客户使用体验反馈分析 |
