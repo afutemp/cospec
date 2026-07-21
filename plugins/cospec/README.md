@@ -96,7 +96,7 @@ Skill 会先执行不联网的 dry-run，并在真正发送前再次确认目标
 | `small-requirement-workflow` | 小需求工作流编排器：串行调用 3 个规划 leaf skill，完成后可选生成 Demo |
 | `generate-demo` | 将用户确认的 cospec Markdown 产物签名提交到 Frieren Demo，并返回 handoff 链接；大需求在 TR1 后调用，小需求在工作流完成后调用 |
 | `product-kb-query` | 产品知识库查询：按需为 leaf skills 注入知识库上下文 |
-| `download-kb` | 下载预置知识库到当前工作目录（当前支持 `vdi`） |
+| `product-kb-server` | 通过 kb-server REST API 管理知识库：列出、下载文档到本地、上传附件 |
 | `product-planning-requirement-clarification` | 需求澄清：原始想法 → "想全面"的澄清结果 |
 | `co-create-customer-minutes-analysis` | 共创客户纪要分析（验证报告） |
 | `customer-experience-feedback-analysis-v2` | 客户使用体验反馈分析 |
