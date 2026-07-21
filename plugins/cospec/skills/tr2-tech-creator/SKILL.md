@@ -104,6 +104,8 @@ Tech 创建在父 Feature 目录下，与 Story 平级：
 
 Tech 文档使用模板：`assets/templates/Tech.md`。
 
+Keep the template YAML frontmatter as the first block in the document. Allocate a stable `TECH-*` ID that is not derived from the filename; use the directly supported `FEAT-*`, `ST-*`, or parent `TECH-*` as `parent_artifact_id`; and list the technical traceability IDs under `source_ids`. Set `estimated_day` only when an estimate is available, using increments of 0.5 day; otherwise keep it `null`.
+
 输出文档必须包含以下结构：
 
 1. `1. 【技术故事 *】`
@@ -174,6 +176,8 @@ EPIC
 - 可选字段不涉及时是否写“无”或“不涉及”，而不是留空。
 - 输出目录和文件名是否符合 `EPIC-{epic-name}/Feature-{feature-name}/Tech-{tech-name}.md` 结构。
 - 是否使用 `assets/templates/Tech.md` 的章节结构。
+- YAML frontmatter 是否包含唯一稳定的 `TECH-*`、正确的 `artifact_type: tech`、直接支撑对象 ID 和完整 `source_ids`。
+- `estimated_day` 有值时是否至少为 0.5 且以 0.5 天为增量；无估算时是否保持 `null`。
 
 ## Resources
 
@@ -187,4 +191,3 @@ DFX references:
 - 可维护性自检：`assets/DFX自检文档/DFX自检_可维护性.md`
 - 开放性自检：`assets/DFX自检文档/DFX自检_开放性.md`
 - 安全性自检：`assets/DFX自检文档/DFX自检_安全性.md`
-

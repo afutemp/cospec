@@ -1,7 +1,7 @@
 {
   "name": "product-kb",
   "version": "0.1.0",
-  "description": "面向产品规划的可追溯知识库工作流：从千流 IPD 生成、更新、评估、优化并查询产品规划知识库",
+  "description": "面向产品规划的可追溯知识库工作流，并提供安全的 cospec manifest 到 IPD 同步能力",
   "author": {
     "name": "afutemp",
     "url": "https://github.com/afutemp"
@@ -19,7 +19,7 @@
   "interface": {
     "displayName": "Product KB",
     "shortDescription": "可追溯的产品规划知识库工作流",
-    "longDescription": "Product KB 从千流 IPD 采集需求和附件证据，生成可追溯的产品规划知识库，并支持增量更新、质量评估、证据内优化和本地查询。",
+    "longDescription": "Product KB 从千流 IPD 采集需求和附件证据，生成可追溯的产品规划知识库，并支持增量更新、质量评估、证据内优化、本地查询和带计划哈希的 cospec manifest 同步。",
     "developerName": "afutemp",
     "category": "Productivity",
     "capabilities": [
@@ -30,7 +30,8 @@
     "defaultPrompt": [
       "从 IPD 项目生成产品规划知识库",
       "评估并优化现有产品知识库",
-      "查询产品知识库中的版本范围和规划风险"
+      "查询产品知识库中的版本范围和规划风险",
+      "预览 cospec manifest 到 IPD 的同步差异"
     ]
   }
 }

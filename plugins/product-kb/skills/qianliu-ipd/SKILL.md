@@ -1,6 +1,6 @@
 ---
 name: qianliu-ipd
-description: 千流IPD系统 - 查询需求详情、按标题搜索需求、查询子需求列表、按项目/版本/团队/迭代范围查需求列表、创建/更新/评论 Epic/Feature/Story/Tech 需求、创建版本（含定制项目集自定义字段）、搜索项目、查询项目版本列表、按名称检查版本是否存在、按工号/姓名查询用户ID、批量同步本地需求文档到IPD（支持工作量同步）、查询项目阶段/活动/交付物/质量标准/评审记录、上传交付物文件、更新质量要求信息、查询需求附件列表/上传需求附件/下载需求附件。当用户需要查询、创建、更新或评论IPD需求，查询项目或项目版本，查询项目阶段活动交付物信息，批量同步需求文档，更新质量要求，或管理需求附件时调用。
+description: 千流IPD系统 - 查询需求详情、按标题搜索需求、查询子需求列表、按项目/版本/团队/迭代范围查需求列表、创建/更新/评论 Epic/Feature/Story/Tech 需求、创建版本（含定制项目集自定义字段）、搜索项目、查询项目版本列表、按名称检查版本是否存在、按工号/姓名查询用户ID、批量同步本地需求文档或 cospec manifest 到IPD、查询项目阶段/活动/交付物/质量标准/评审记录、上传交付物文件、更新质量要求信息、查询需求附件列表/上传需求附件/下载需求附件。当用户需要查询、创建、更新或评论IPD需求，查询项目或项目版本，查询项目阶段活动交付物信息，安全预览并同步 cospec 产物，更新质量要求，或管理需求附件时调用。
 version: 1.18.0
 ---
 
@@ -27,6 +27,7 @@ version: 1.18.0
 - **评论需求**：在需求下添加评论，支持 @提及用户
 - **查看评论**：获取需求下的评论列表，包含回复
 - **批量同步需求**：将本地需求文档（Epic→Feature→Story→Tech-系统级→Tech-服务级）批量同步到 IPD，支持工作量同步
+- **同步 cospec manifest**：先计算远端差异和计划哈希，确认后按 Epic→Feature→Story→Tech 顺序同步，并上传 TR1 交付物或根 Epic 附件
 - **批量删除条目**：按 ipd_index.yaml 中的 ID 批量删除 IPD 条目，预览模式显示名称便于确认
 - **查询项目阶段**：获取项目下某个版本的所有阶段信息（如立项阶段、计划阶段等）
 - **查询阶段活动**：获取阶段下的流程活动列表或评审活动列表
@@ -115,7 +116,7 @@ version: 1.18.0
 
 ### 如何获取 Token
 
-打开 [ipd.sangfor.com](http://ipd.sangfor.com) → 右上角个人头像 → 复制用户 token
+打开 [ipd.sangfor.com](http://ipd.sangfor.com/) → 右上角个人头像 → 复制用户 token
 
 详细图文说明：[千流平台token认证获取入口指南](https://wiki.sangfor.com/x/oIFYDw)
 
@@ -154,6 +155,7 @@ version: 1.18.0
 | searchUsers | 搜索用户 | keyword(工号/姓名/邮箱) |
 | resolveAssignerId | 解析指派人ID | keyword(工号或姓名) |
 | syncFromDocs | 批量同步需求文档 | docsRoot, projectId, versionId[, productId, indexFile] |
+| syncManifest | 预览或执行 cospec manifest 同步 | mode, manifestPath, indexPath, productId, projectId, versionId, teamId, routing[, expectedPlanHash, previewFile] |
 | deleteIssue | 删除需求 | issueId |
 | getProjectStages | 获取项目版本阶段信息 | ipdProjectId, planVersionId |
 | getStageActivities | 获取阶段流程活动 | stageId, planVersionId |
@@ -533,6 +535,70 @@ const allDeliverables = await api.fetchAllPages(({ page }) =>
 - 无需安装任何依赖，仅使用 Node.js 内置模块
 
 ---
+
+## 同步 cospec manifest
+
+`syncManifest` 是 `sync-to-ipd` 的安全写入接口。必须先运行 `preview`，向用户展示返回的 `planHash`、目标、创建、更新、上传、不变和冲突数量；只有用户针对该预览回复“确认执行”后，才能运行 `apply`。
+
+```javascript
+const sync = require('.../qianliu-ipd/scripts/sync_from_manifest');
+
+const target = {
+  productId: Number(process.env.IPD_PRODUCT_ID),
+  projectId: Number(process.env.IPD_PROJECT_ID),
+  versionId: Number(process.env.IPD_VERSION_ID),
+  teamId: Number(process.env.IPD_TEAM_ID),
+};
+
+const input = {
+  manifestPath: '/project/product-planning/example/.ipd-sync/manifest.json',
+  indexPath: '/project/product-planning/example/.ipd-sync/index.json',
+  target,
+  routing: {
+    review: {
+      kind: 'deliverable',
+      deliverableId: Number(process.env.IPD_DELIVERABLE_ID),
+      activityId: Number(process.env.IPD_ACTIVITY_ID),
+    },
+    aiContext: { kind: 'issueAttachment', rootEpicArtifactId: 'EPIC-001' },
+  },
+  ipdApi: api,
+};
+
+const preview = await sync.buildSyncPlan(input);
+// 用户确认 preview.planHash 后：
+const result = await sync.applySyncPlan({ ...input, expectedPlanHash: preview.planHash });
+```
+
+也可运行 `sync_from_manifest.js` CLI；缺少适合的 TR1 交付物时不要创建交付物，省略 `--reviewDeliverableId`，让两份 TR1 都回退到 `--rootEpicArtifactId` 对应根 Epic 的附件。
+
+```bash
+node sync_from_manifest.js \
+  --mode preview \
+  --manifest <manifest.json> \
+  --index <index.json> \
+  --productId <id> \
+  --projectId <id> \
+  --versionId <id> \
+  --teamId <id> \
+  --rootEpicArtifactId <EPIC-id> \
+  --reviewDeliverableId <id> \
+  --reviewActivityId <id> \
+  --previewFile <preview.md>
+
+node sync_from_manifest.js <相同参数> \
+  --mode apply \
+  --expectedPlanHash <已确认的-planHash>
+```
+
+安全约束：
+
+- `preview` 只调用查询 API，可写本地预览文件，但不得调用任何 IPD 写接口。
+- 无索引绑定的同名需求一律返回冲突，不按名称自动复用。
+- 类型、父级、索引 ID 或目标不一致时停止，不自动改父级。
+- `apply` 只接受当前远端和本地状态重新计算后仍一致的 `planHash`。
+- 不删除需求，不修改状态、负责人或优先级，不创建产品、项目、版本或交付物。
+- 写入失败后立即停止，不自动重试；成功项实时写入本地索引，供下一次预览跳过。
 
 ## 批量同步需求文档
 

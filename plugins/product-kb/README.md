@@ -12,6 +12,7 @@
 | `/product-kb:product-kb-eval` | 执行确定性规则校验和基于来源证据的语义评估 |
 | `/product-kb:product-kb-optimize` | 根据评估报告预览并应用有 IPD 证据支持的修复 |
 | `/product-kb:product-kb-query` | 查询本地规划文档、元数据和生成时 IPD 快照 |
+| `/product-kb:qianliu-ipd` | 查询和管理 IPD，并为 cospec `sync-to-ipd` 提供 manifest 预览、计划哈希和确认后同步能力 |
 
 共享的确定性实现位于 `scripts/product-kb-core/`，它不是用户可直接触发的 Skill。
 
@@ -80,6 +81,7 @@ product-kb/
 - 空文件、超限、下载失败、解析失败或不支持格式会保留可用元数据/原文件并生成结构化 warning，禁止静默忽略或把未解析附件当证据。
 - 生成文档采用整文件受管；非受管文件不会被 Update 或 Optimize 修改、覆盖或删除。
 - Update 和 Optimize 都先生成预览，并分别等待用户确认。
+- cospec manifest 同步先计算远端差异和计划哈希；无索引的同名需求视为冲突，写失败立即停止且不自动重试。
 - 删除受管文件必须同时满足 Meta、Manifest 和管理标记三重证明。
 - Core 拒绝路径穿越、符号链接逃逸和通过受管操作覆盖非受管文件。
 

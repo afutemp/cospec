@@ -6,8 +6,8 @@ This repository is an archive of AI coding-agent plugins. Each plugin lives unde
 
 | Plugin | Description | Platforms |
 |--------|-------------|-----------|
-| [cospec](./plugins/cospec) | AI-native product planning workflow: requirement clarification, user journey design, TR1/TR2 artifacts, and confirmed Frieren Demo handoff. | Claude Code, Codex, Cursor |
-| [product-kb](./plugins/product-kb) | Traceable product-planning knowledge bases generated from IPD data, with update, evaluation, optimization, and query workflows. | Claude Code, Codex |
+| [cospec](./plugins/cospec) | AI-native product planning workflow: requirement clarification, user journey design, TR1/TR2, confirmed Frieren Demo handoff, and previewed synchronization to IPD. | Claude Code, Codex, Cursor |
+| [product-kb](./plugins/product-kb) | Traceable product-planning knowledge bases plus preview-first cospec manifest synchronization to IPD. | Claude Code, Codex |
 
 ## Usage as a Marketplace
 

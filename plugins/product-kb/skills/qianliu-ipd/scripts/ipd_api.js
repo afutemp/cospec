@@ -17,6 +17,7 @@ const { URL } = require('url');
 const IPD_BASE_URL    = 'http://ipd.sangfor.com';
 const IPD_PORTAL_URL  = 'https://ipd.atrust.sangfor.com';   // 用户可见的平台链接
 const API_BASE        = `${IPD_BASE_URL}/api`;
+const USER_AGENT      = 'qianliu-ipd/1.18.0';
 
 /** 拼接需求详情 URL（带产品 ID） */
 function buildIssueUrl(issueId, productId) {
@@ -80,6 +81,7 @@ function request(endpoint, method = 'GET', body = null) {
       method,
       headers: {
         'token':        IPD_TOKEN,
+        'User-Agent':   USER_AGENT,
         'Content-Type': 'application/json',
         'Accept':       'application/json',
         ...(payload ? { 'Content-Length': payload.length } : {}),
@@ -124,6 +126,7 @@ function requestBase(endpoint, method = 'GET', body = null) {
       method,
       headers: {
         'token':        IPD_TOKEN,
+        'User-Agent':   USER_AGENT,
         'Content-Type': 'application/json',
         'Accept':       'application/json',
         ...(payload ? { 'Content-Length': payload.length } : {}),
@@ -297,7 +300,6 @@ async function getAllProducts({ page = 1, per = 300, onState } = {}) {
 
 /**
  * 获取产品下的项目列表
- * 注意：该接口不使用 /api/ 前缀，直接拼接到 IPD_BASE_URL
  * @param {number} productId    产品 ID
  * @param {object} [opts]
  * @param {number} [opts.page=1]          页码
@@ -315,7 +317,7 @@ async function getProductProjects(productId, {
   if (name)  params.push(`name=${encodeURIComponent(name)}`);
   if (state) params.push(`state=${encodeURIComponent(state)}`);
 
-  const res = await requestBase(`ipd/project/simple_project/${productId}?${params.join('&')}`);
+  const res = await request(`ipd/project/simple_project/${productId}?${params.join('&')}`);
   const PROJECT_STATE_ZH = {
     project_backlog:  '未启动',
     project_todo:     '进行中',
@@ -1146,6 +1148,7 @@ function uploadAttachment(fileBuffer, filename) {
       method:   'POST',
       headers: {
         'token':          IPD_TOKEN,
+        'User-Agent':     USER_AGENT,
         'Content-Type':   `multipart/form-data; boundary=${boundary}`,
         'Accept':         'application/json',
         'Content-Length':  payload.length,
@@ -1286,6 +1289,7 @@ async function uploadIssueAttachment(issueId, fileBuffer, filename) {
       method:   'POST',
       headers: {
         'token':          IPD_TOKEN,
+        'User-Agent':     USER_AGENT,
         'Content-Type':   `multipart/form-data; boundary=${boundary}`,
         'Accept':         'application/json',
         'Content-Length':  payload.length,
@@ -1346,7 +1350,7 @@ function downloadAttachmentResponse(fileUrl, destPath, options, redirectCount = 
     if (redirectCount > maxRedirects) return reject(new Error(`下载附件重定向次数超过上限 ${maxRedirects}`));
     const parsed = fileUrl instanceof URL ? fileUrl : new URL(fileUrl);
     const lib = parsed.protocol === 'https:' ? https : http;
-    const requestOptions = {hostname: parsed.hostname, ...(parsed.port ? {port: Number(parsed.port)} : {}), path: parsed.pathname + parsed.search, method: 'GET', headers: {}};
+    const requestOptions = {hostname: parsed.hostname, ...(parsed.port ? {port: Number(parsed.port)} : {}), path: parsed.pathname + parsed.search, method: 'GET', headers: {'User-Agent': USER_AGENT}};
     if (parsed.origin === new URL(IPD_BASE_URL).origin) requestOptions.headers.token = IPD_TOKEN;
     const req = lib.request(requestOptions, httpRes => {
       if ([301, 302, 303, 307, 308].includes(httpRes.statusCode)) {

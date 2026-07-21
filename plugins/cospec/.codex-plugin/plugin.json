@@ -1,7 +1,7 @@
 {
   "name": "cospec",
-  "version": "1.0.8",
-  "description": "AI 原生产品规划工作流：TR1/TR2 文档生成及 Frieren Demo 生成",
+  "version": "1.0.9",
+  "description": "AI 原生产品规划工作流：TR1/TR2 文档生成、Frieren Demo 生成及确认后的 IPD 同步",
   "author": {
     "name": "afutemp"
   },
@@ -17,6 +17,7 @@
     "clarification",
     "demo-generation",
     "frieren",
+    "ipd-sync",
     "dag",
     "skills"
   ],
@@ -24,7 +25,7 @@
   "interface": {
     "displayName": "cospec",
     "shortDescription": "AI 原生产品规划工作流",
-    "longDescription": "cospec 提供需求澄清、用户旅程设计和 TR1/TR2 文档生成能力，并支持将用户确认的 Markdown 安全提交到 Frieren Demo。",
+    "longDescription": "cospec 提供需求澄清、用户旅程设计、TR1/TR2 文档生成能力，并支持将确认的产物安全提交到 Frieren Demo 或预览后同步至 IPD。",
     "developerName": "afutemp",
     "category": "Productivity",
     "capabilities": ["Read", "Write"],
@@ -33,7 +34,8 @@
       "使用 cospec 澄清这个需求",
       "使用 cospec 设计用户旅程",
       "使用 cospec 生成 TR1 需求说明书",
-      "使用 generate-demo 从已确认的需求文档生成 Demo"
+      "使用 generate-demo 从已确认的需求文档生成 Demo",
+      "使用 sync-to-ipd 预览并同步大需求产物到 IPD"
     ]
   }
 }

@@ -1,3 +1,15 @@
+---
+cospec_artifact:
+  schema_version: 1
+  artifact_id: TECH-{id}
+  artifact_type: tech
+  parent_artifact_id: FEAT-or-ST-{parent-id}
+  estimated_day: null
+  source_ids:
+    - TECH-{id}
+    - FEAT-or-ST-{parent-id}
+---
+
 # Tech
 
 > 💡 **层级映射**：Tech与Story平行，同属于Feature层级下，描述技术实现方案

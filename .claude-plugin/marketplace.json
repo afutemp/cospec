@@ -18,7 +18,7 @@
     },
     {
       "name": "product-kb",
-      "description": "Claude Code plugin for reusable knowledge-base skills",
+      "description": "Product knowledge-base workflows and safe cospec-to-IPD synchronization",
       "version": "0.1.0",
       "source": "./plugins/product-kb",
       "author": {

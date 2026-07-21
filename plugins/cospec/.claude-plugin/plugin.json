@@ -1,7 +1,7 @@
 {
   "name": "cospec",
-  "description": "AI 原生产品规划工作流：TR1/TR2 文档生成及 Frieren Demo 生成",
-  "version": "1.0.8",
+  "description": "AI 原生产品规划工作流：TR1/TR2 文档生成、Frieren Demo 生成及确认后的 IPD 同步",
+  "version": "1.0.9",
   "author": {
     "name": "afutemp"
   },
@@ -17,6 +17,7 @@
     "workflow",
     "clarification",
     "demo-generation",
-    "frieren"
+    "frieren",
+    "ipd-sync"
   ]
 }

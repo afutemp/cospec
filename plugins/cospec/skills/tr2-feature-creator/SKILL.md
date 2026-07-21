@@ -105,6 +105,8 @@ Feature 创建在父 EPIC 目录下：
 
 Feature 文档使用模板：`assets/templates/Feature.md`。
 
+Keep the template YAML frontmatter as the first block in the document. Use the primary `FEAT-*` as `artifact_id`, the parent `EPIC-*` as `parent_artifact_id`, and list every directly used traceability ID under `source_ids`. Do not derive IDs from filenames.
+
 输出文档必须包含以下结构：
 
 1. `【关联关键价值点】`
@@ -179,10 +181,10 @@ EPIC
 - Feature 是否能够继续拆解为 Story 和 Tech，而不是已经细到单个 Story 或技术任务。
 - 输出目录和文件名是否符合 `EPIC-{epic-name}/Feature-{feature-name}/Feature-{feature-name}.md` 结构。
 - 是否使用 `assets/templates/Feature.md` 的章节结构。
+- YAML frontmatter 是否包含唯一稳定的 `FEAT-*`、正确的 `artifact_type: feature`、父 `EPIC-*` 和完整 `source_ids`。
 
 ## Resources
 
 Templates:
 
 - Feature 模板：`assets/templates/Feature.md`
-

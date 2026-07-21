@@ -102,6 +102,8 @@ EPIC 聚焦业务价值和高层能力边界，不写过细技术实现，也不
 
 EPIC 文档使用模板：`assets/templates/EPIC.md`。
 
+Keep the template YAML frontmatter as the first block in the document. Replace `EPIC-{id}` with the primary `EPIC-*` ID from the TR1 AI context and list every directly used traceability ID under `source_ids`. Do not derive the ID from the filename.
+
 输出文档必须包含以下结构：
 
 1. `【DCP2-1--关键价值点】`
@@ -165,10 +167,10 @@ EPIC
 - EPIC 范围是否聚焦；过宽时是否拆分多个 EPIC。
 - 输出目录和文件名是否符合 `EPIC-{name}/EPIC-{name}.md` 结构。
 - 是否使用 `assets/templates/EPIC.md` 的章节结构。
+- YAML frontmatter 是否包含唯一且稳定的 `artifact_id`、正确的 `artifact_type: epic` 和完整 `source_ids`。
 
 ## Resources
 
 Templates:
 
 - EPIC 模板：`assets/templates/EPIC.md`
-

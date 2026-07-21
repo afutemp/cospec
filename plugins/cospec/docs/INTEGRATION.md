@@ -378,6 +378,10 @@ skills/product-planning-with-competitor-workflow/
 
 需要向外部服务发送文档的 Skill 必须采用“选择文件 → dry-run → 确认发送”门禁。凭据只从进程环境读取，不写入 `cospec.config.json`；脚本不得输出签名、原始请求正文、文档内容或原始错误响应。
 
+`sync-to-ipd` 也是独立 Skill，不接入 `brainstorming`。它只负责 cospec 产物发现、稳定 ID／层级校验、目标选择、预览和最终确认；IPD 查询和写入委托 product-kb 插件的 `qianliu-ipd`。集成必须保留以下边界：预览零 IPD 写入、同名不自动绑定、计划哈希漂移失效、写失败不自动重试、TR1 评审版优先交付物且 AI 上下文版进入根 Epic 附件。
+
+新生成的 TR2 文档必须保留模板首部的 `cospec_artifact` YAML，提供稳定 `artifact_id`、`artifact_type`、`parent_artifact_id`（Epic 除外）和 `source_ids`。旧文档缺少稳定 ID 时必须先迁移或显式绑定，不能仅按文件名同步。
+
 ### 4.4 新增配置项
 
 如果新 skill 需要可配置项：
