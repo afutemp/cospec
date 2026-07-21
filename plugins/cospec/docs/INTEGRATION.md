@@ -191,17 +191,21 @@ Skill("tr2-tech-creator")
 
 cospec 支持通过 `cospec.config.json` 的 `kb` 字段接入产品知识库，并默认启用 `product-kb-query` skill 在调用 leaf skills 前统一注入 KB 上下文。
 
-**默认不内置任何具体知识库内容**。插件提供 `download-kb` skill，用于把预置知识库下载到当前工作目录。
+**默认不内置任何具体知识库内容**。插件提供 `product-kb-server` skill，用于通过 kb-server REST API 把知识库文档下载到当前工作目录。
 
-### 3.1 下载预置知识库
+### 3.1 下载知识库
 
-当前支持下载 `vdi` 知识库：
+`product-kb-server` 不绑定任何固定知识库名称。下载前先列出服务器上可用的知识库，由用户选择（或用户直接提供名称/ID）后再下载：
 
 ```
-/download-kb vdi
+# 1. 列出所有知识库
+/product-kb-server list
+
+# 2. 下载用户选择的知识库
+/product-kb-server download --kb <kb-name-or-id> --output ./<kb-name>-kb
 ```
 
-执行后会将知识库复制到当前工作目录的 `vdi-kb/` 下。
+执行 `download` 后会将知识库的 `raw/` 文档内容解压到 `--output` 指定的目录下。
 
 ### 3.2 配置方式
 
@@ -211,12 +215,12 @@ cospec 支持通过 `cospec.config.json` 的 `kb` 字段接入产品知识库，
 {
   "kb": {
     "skill": "product-kb-query",
-    "localPath": "vdi-kb/"
+    "localPath": "<kb-name>-kb/"
   }
 }
 ```
 
-`kb.localPath` 默认为 `null`（不启用文件型 KB）。配置后 `product-kb-query` 仅使用该路径，不做自动探测。**推荐运行 `/download-kb vdi` 自动下载并配置，无需手动修改。**
+`kb.localPath` 默认为 `null`（不启用文件型 KB）。配置后 `product-kb-query` 仅使用该路径，不做自动探测。**推荐先运行 `/product-kb-server list` 获取可用知识库，再运行 `/product-kb-server download --kb <kb-name-or-id> --output ./<kb-name>-kb` 自动下载并配置，无需手动修改。**
 
 | 字段 | 说明 |
 | :--- | :--- |
@@ -278,12 +282,13 @@ cospec 支持通过 `cospec.config.json` 的 `kb` 字段接入产品知识库，
 
 此时不再调用任何 KB skill，workflow 仍正常运行，只是 leaf skills 不会收到额外知识库上下文。
 
-### 3.7 扩展 download-kb 支持更多知识库
+### 3.7 扩展 product-kb-server 支持更多知识库
 
-`download-kb` 当前内置 `vdi` 映射。要增加新的预置知识库：
+`product-kb-server` 通过调用 kb-server 的 `/api/kb/:id/download` 接口获取知识库归档。要增加新的知识库来源：
 
-1. 编辑 `skills/download-kb/SKILL.md` 的 **Inputs** 表格和 **Workflow** 中的源路径映射。
-2. 更新 README、CLAUDE.md 中 `download-kb` 的职责说明。
+1. 确保 kb-server 中已存在对应知识库名称（name）或 ID。
+2. 使用 `/product-kb-server download --kb <name-or-id> --output ./<dir>` 下载。
+3. 更新 README、CLAUDE.md 中 `product-kb-server` 的职责说明。
 
 ---
 
