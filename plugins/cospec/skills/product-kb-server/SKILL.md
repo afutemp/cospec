@@ -65,6 +65,13 @@ TOKEN=$(curl -s -X POST $KB_SERVER_URL/api/auth/login \
 # 解压后目录结构：./docs/<kb-name>/raw/*.md
 ```
 
+`download` 命令完成后会**自动配置**插件根目录的 `cospec.config.json`：
+
+- 设置 `kb.skill` 为 `product-kb-query`（仅在未设置时）
+- 设置 `kb.localPath` 为 `--output` 目录的绝对路径
+
+用户无需手动修改配置即可使用 `product-kb-query`。
+
 ### 示例
 
 **上传 Markdown 文档：**

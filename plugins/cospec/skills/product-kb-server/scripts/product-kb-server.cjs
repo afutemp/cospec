@@ -117,9 +117,54 @@ async function cmdDownload(opts) {
 
     const count = countFiles(opts.output);
     console.log(`[download] done — ${count} documents in ${opts.output}`);
+
+    const configResult = configureKbLocalPath(opts.output);
+    if (configResult.ok) {
+      console.log(`[config] updated ${configResult.file}`);
+      console.log(`[config] kb.localPath = ${configResult.localPath}`);
+    } else {
+      console.log(`[config] skipped — ${configResult.error}`);
+    }
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
+}
+
+// ════════════════════════════════════════════
+// Auto-configure cospec.config.json
+// ════════════════════════════════════════════
+function configureKbLocalPath(outputDir) {
+  // Plugin root: scripts/ → product-kb-server/ → skills/ → cospec/
+  const pluginRoot = path.resolve(__dirname, '../../..');
+  const configPath = path.join(pluginRoot, 'cospec.config.json');
+
+  let config = {};
+  if (fs.existsSync(configPath)) {
+    try {
+      config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    } catch (e) {
+      return { ok: false, error: `failed to parse ${configPath}: ${e.message}` };
+    }
+  }
+
+  if (!config.kb || typeof config.kb !== 'object') {
+    config.kb = {};
+  }
+
+  if (!config.kb.skill) {
+    config.kb.skill = 'product-kb-query';
+  }
+
+  const absPath = path.resolve(outputDir);
+  config.kb.localPath = absPath;
+
+  try {
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
+  } catch (e) {
+    return { ok: false, error: `failed to write ${configPath}: ${e.message}` };
+  }
+
+  return { ok: true, file: configPath, localPath: absPath };
 }
 
 // ── Minimal tar.gz extraction (zero deps, USTAR format) ──

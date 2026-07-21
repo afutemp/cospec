@@ -209,7 +209,12 @@ cospec 支持通过 `cospec.config.json` 的 `kb` 字段接入产品知识库，
 
 ### 3.2 配置方式
 
-下载后，修改 `cospec.config.json` 的 `kb.localPath` 指向该目录（相对插件根目录或绝对路径）。例如下载到当前目录时：
+`download` 命令执行完毕后会**自动配置**插件根目录的 `cospec.config.json`：
+
+- `kb.skill` 设置为 `product-kb-query`（若当前为 `null` 或未设置）
+- `kb.localPath` 设置为 `--output` 目录的绝对路径
+
+下载完成后无需手动修改配置。如果你需要调整，可以编辑 `cospec.config.json`：
 
 ```json
 {
@@ -220,7 +225,7 @@ cospec 支持通过 `cospec.config.json` 的 `kb` 字段接入产品知识库，
 }
 ```
 
-`kb.localPath` 默认为 `null`（不启用文件型 KB）。配置后 `product-kb-query` 仅使用该路径，不做自动探测。**推荐先运行 `/product-kb-server list` 获取可用知识库，再运行 `/product-kb-server download --kb <kb-name-or-id> --output ./<kb-name>-kb` 自动下载并配置，无需手动修改。**
+`kb.localPath` 默认为 `null`（不启用文件型 KB）。配置后 `product-kb-query` 仅使用该路径，不做自动探测。**推荐先运行 `/product-kb-server list` 获取可用知识库，再运行 `/product-kb-server download --kb <kb-name-or-id> --output ./<kb-name>-kb` 自动下载并配置。**
 
 | 字段 | 说明 |
 | :--- | :--- |

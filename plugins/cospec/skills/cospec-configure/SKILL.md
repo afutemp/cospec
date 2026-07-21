@@ -160,7 +160,7 @@ Validation: non-empty string.
 > "是否启用知识库查询 skill？输入 skill 名称（默认：`product-kb-query`），输入 `null` 禁用 skill 查询并仅使用本地路径，或跳过使用默认。"
 
 **localPath**
-> "本地知识库目录路径是什么？请提供路径（相对 plugin 根目录或绝对路径），或跳过使用默认：`null`（不启用文件型 KB）。建议先通过 `/product-kb-server list` 查看可用知识库，再运行 `/product-kb-server download --kb <kb-name-or-id> --output ./<kb-name>-kb` 下载，最后将该目录配置为本地知识库路径。"
+> "本地知识库目录路径是什么？请提供路径（相对 plugin 根目录或绝对路径），或跳过使用默认：`null`（不启用文件型 KB）。建议先通过 `/product-kb-server list` 查看可用知识库，再运行 `/product-kb-server download --kb <kb-name-or-id> --output ./<kb-name>-kb`，下载后会自动配置本地知识库路径。"
 
 After user provides a path: verify the directory exists.
 
