@@ -14,6 +14,7 @@ const USAGE = `Usage: product-kb-server <command> [options]
 
 Commands:
   list                          List all knowledge bases
+  check-update --kb <name>      Check if local KB is up to date
   download --kb <name> [--output <dir>] [--format tar.gz|zip]
   upload   --kb <name> --files <glob> [--token <tok>]
 
@@ -23,6 +24,7 @@ Options:
 
 Examples:
   product-kb-server list
+  product-kb-server check-update --kb <kb-name-or-id>
   product-kb-server download --kb <kb-name-or-id>
   product-kb-server download --kb <kb-name-or-id> --output ./docs
   product-kb-server upload --kb <kb-name-or-id> --files "./docs/*.md"
@@ -63,6 +65,26 @@ function getPluginName() {
 
 function getGlobalKbRoot() {
   return path.join(os.homedir(), `.${getPluginName()}`, 'kb');
+}
+
+const VERSION_FILE = '.kb-version';
+
+function getVersionFilePath(outputDir) {
+  return path.join(outputDir, VERSION_FILE);
+}
+
+function readLocalVersion(outputDir) {
+  const versionPath = getVersionFilePath(outputDir);
+  try {
+    return fs.readFileSync(versionPath, 'utf8').trim();
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalVersion(outputDir, version) {
+  const versionPath = getVersionFilePath(outputDir);
+  fs.writeFileSync(versionPath, `${version}\n`);
 }
 
 function sanitizeKbName(name) {
@@ -114,7 +136,25 @@ async function cmdDownload(opts) {
   if (!kb) throw new Error(`KB '${opts.kb}' not found. Run 'list' to see available KBs.`);
 
   const outputDir = opts.output || getDefaultKbDir(kb.name);
+  const serverVersion = kb.current_version_id ?? null;
+  const localVersion = readLocalVersion(outputDir);
+
+  if (serverVersion && localVersion && serverVersion === localVersion) {
+    console.log(`[download] ${kb.name} is up to date (${localVersion}) — skipping`);
+    const configResult = configureKbLocalPath(outputDir);
+    if (configResult.ok) {
+      console.log(`[config] updated ${configResult.file}`);
+      console.log(`[config] kb.localPath = ${configResult.localPath}`);
+    }
+    return;
+  }
+
   console.log(`[download] ${kb.name} (${kb.id}) → ${outputDir}`);
+  if (localVersion && serverVersion) {
+    console.log(`[download] updating ${localVersion} → ${serverVersion}`);
+  } else if (serverVersion) {
+    console.log(`[download] server version ${serverVersion}`);
+  }
 
   const url = `${opts.server}/api/kb/${kb.id}/download?format=${opts.format}`;
   const res = await fetch(url, { headers: authHeaders(opts.token) });
@@ -148,6 +188,10 @@ async function cmdDownload(opts) {
     const kbRoot = detectKbRoot(tmp);
     copyDir(kbRoot, outputDir);
 
+    if (serverVersion) {
+      writeLocalVersion(outputDir, serverVersion);
+    }
+
     const count = countFiles(outputDir);
     console.log(`[download] done — ${count} documents in ${outputDir}`);
 
@@ -160,6 +204,34 @@ async function cmdDownload(opts) {
     }
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+// ════════════════════════════════════════════
+// check-update
+// ════════════════════════════════════════════
+async function cmdCheckUpdate(opts) {
+  const kb = await resolveKb(opts.server, opts.token, opts.kb);
+  if (!kb) throw new Error(`KB '${opts.kb}' not found. Run 'list' to see available KBs.`);
+
+  const outputDir = opts.output || getDefaultKbDir(kb.name);
+  const serverVersion = kb.current_version_id ?? null;
+  const localVersion = readLocalVersion(outputDir);
+
+  if (!serverVersion) {
+    console.log(`[check-update] ${kb.name}: server version unknown — cannot compare`);
+    return;
+  }
+
+  if (!localVersion) {
+    console.log(`[check-update] ${kb.name}: not downloaded locally (server: ${serverVersion})`);
+    return;
+  }
+
+  if (serverVersion === localVersion) {
+    console.log(`[check-update] ${kb.name}: up to date (${localVersion})`);
+  } else {
+    console.log(`[check-update] ${kb.name}: update available (${localVersion} → ${serverVersion})`);
   }
 }
 
@@ -346,9 +418,10 @@ async function main() {
 
   try {
     switch (opts.command) {
-      case 'list':     await cmdList(opts); break;
-      case 'download': await cmdDownload(opts); break;
-      case 'upload':   await cmdUpload(opts); break;
+      case 'list':          await cmdList(opts); break;
+      case 'check-update':  await cmdCheckUpdate(opts); break;
+      case 'download':      await cmdDownload(opts); break;
+      case 'upload':        await cmdUpload(opts); break;
       default: console.error(`Unknown command: ${opts.command}`); console.log(USAGE); process.exit(1);
     }
   } catch (e) {
