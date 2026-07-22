@@ -5,7 +5,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
-const { execSync } = require('node:child_process');
+const zlib = require('node:zlib');
 
 const KB_SERVER_URL = (process.env.KB_SERVER_URL ?? 'http://10.6.100.230').replace(/\/$/, '');
 const AUTH_TOKEN = process.env.KB_AUTH_TOKEN ?? '';
@@ -176,15 +176,11 @@ async function cmdDownload(opts) {
   fs.mkdirSync(outputDir, { recursive: true });
 
   try {
+    fs.mkdirSync(tmp, { recursive: true });
     if (opts.format === 'zip') {
-      const zipPath = path.join(tmp, '_archive.zip');
-      fs.mkdirSync(tmp, { recursive: true });
-      fs.writeFileSync(zipPath, buf);
-      execSync(`unzip -o "${zipPath}" -d "${tmp}"`, { stdio: 'ignore' });
-      fs.unlinkSync(zipPath);
+      extractZip(buf, tmp);
     } else {
-      fs.mkdirSync(tmp, { recursive: true });
-      execSync(`tar -xzf - -C "${tmp}"`, { input: buf, stdio: ['pipe', 'ignore', 'ignore'] });
+      extractTarGz(buf, tmp);
     }
 
     const kbRoot = detectKbRoot(tmp);
@@ -264,6 +260,156 @@ async function cmdDelete(opts) {
   if (clearResult.ok) {
     console.log(`[config] cleared kb.localPath in ${clearResult.file}`);
   }
+}
+
+// ════════════════════════════════════════════
+// Archive extraction (pure Node.js built-ins — no external tar/unzip)
+// Handles .tar.gz (gzip + POSIX/pax tar) and .zip (store + deflate) so the
+// script works identically on Linux, macOS and Windows without shell tools.
+// ════════════════════════════════════════════
+function extractTarGz(gzipBuf, destDir) {
+  const tarBuf = zlib.gunzipSync(gzipBuf);
+  extractTar(tarBuf, destDir);
+}
+
+function extractTar(tarBuf, destDir) {
+  const HEADER = 512;
+  let offset = 0;
+  let pending = {}; // pax / GNU long-name overrides applied to the next entry
+  const len = tarBuf.length;
+
+  while (offset + HEADER <= len) {
+    const header = tarBuf.subarray(offset, offset + HEADER);
+    // End-of-archive: an all-zero block.
+    if (header.every(b => b === 0)) break;
+
+    const typeflag = String.fromCharCode(header[156]);
+    const name = readTarString(header, 0, 100);
+    const prefix = readTarString(header, 345, 155);
+    const size = parseInt(readTarString(header, 124, 12).trim(), 8) || 0;
+
+    offset += HEADER;
+    const data = tarBuf.subarray(offset, offset + size);
+    offset += Math.ceil(size / HEADER) * HEADER;
+
+    if (typeflag === 'x' || typeflag === 'g') {
+      // POSIX pax extended header: overrides apply to the following entry.
+      pending = parsePaxRecords(data);
+      continue;
+    }
+    if (typeflag === 'L' || typeflag === 'K') {
+      // GNU long name/link: payload is the full path for the next entry.
+      pending.path = readTarString(data, 0, data.length);
+      continue;
+    }
+    if (typeflag === '0' || typeflag === '\0') {
+      writeArchiveFile(destDir, pending.path || joinTarPath(prefix, name), data);
+    } else if (typeflag === '5') {
+      fs.mkdirSync(safeArchivePath(destDir, pending.path || joinTarPath(prefix, name)), { recursive: true });
+    }
+    // Other types (symlinks, hard links, devices) are ignored.
+    pending = {};
+  }
+}
+
+function readTarString(buf, start, length) {
+  const slice = buf.subarray(start, start + length);
+  const nul = slice.indexOf(0);
+  return (nul === -1 ? slice : slice.subarray(0, nul)).toString('utf8');
+}
+
+function joinTarPath(prefix, name) {
+  return prefix ? `${prefix.replace(/\/$/, '')}/${name}` : name;
+}
+
+function parsePaxRecords(buf) {
+  const records = {};
+  let i = 0;
+  while (i < buf.length) {
+    const space = indexOfByte(buf, 0x20, i);
+    if (space === -1) break;
+    const recLen = parseInt(buf.subarray(i, space).toString('ascii'), 10);
+    if (!recLen || i + recLen > buf.length) break;
+    const rec = buf.subarray(i, i + recLen).toString('utf8'); // "<len> <keyword>=<value>\n"
+    const sp = rec.indexOf(' ');
+    const eq = rec.indexOf('=');
+    if (sp !== -1 && eq > sp) {
+      records[rec.slice(sp + 1, eq)] = rec.slice(eq + 1).replace(/\r?\n$/, '');
+    }
+    i += recLen;
+  }
+  return records;
+}
+
+function indexOfByte(buf, byte, from) {
+  for (let i = from; i < buf.length; i++) if (buf[i] === byte) return i;
+  return -1;
+}
+
+function extractZip(zipBuf, destDir) {
+  const eocd = findZipEocd(zipBuf);
+  if (eocd === -1) throw new Error('Invalid zip archive (EOCD record not found)');
+
+  let offset = zipBuf.readUInt32LE(eocd + 16); // central directory offset
+  const CENTRAL_SIG = 0x02014b50;
+  while (offset + 46 <= zipBuf.length && zipBuf.readUInt32LE(offset) === CENTRAL_SIG) {
+    const method = zipBuf.readUInt16LE(offset + 10);
+    const compSize = zipBuf.readUInt32LE(offset + 20);
+    const nameLen = zipBuf.readUInt16LE(offset + 28);
+    const extraLen = zipBuf.readUInt16LE(offset + 30);
+    const commentLen = zipBuf.readUInt16LE(offset + 32);
+    const localOffset = zipBuf.readUInt32LE(offset + 42);
+    const name = zipBuf.subarray(offset + 46, offset + 46 + nameLen).toString('utf8');
+    offset += 46 + nameLen + extraLen + commentLen;
+
+    if (name.endsWith('/') || name.includes('__MACOSX')) continue;
+
+    const lNameLen = zipBuf.readUInt16LE(localOffset + 26);
+    const lExtraLen = zipBuf.readUInt16LE(localOffset + 28);
+    const dataStart = localOffset + 30 + lNameLen + lExtraLen;
+    const raw = zipBuf.subarray(dataStart, dataStart + compSize);
+
+    let content;
+    if (method === 0) {
+      content = raw; // stored (no compression)
+    } else if (method === 8) {
+      content = zlib.inflateRawSync(raw); // deflate
+    } else {
+      throw new Error(`Unsupported zip compression method (${method}) for entry ${name}`);
+    }
+    writeArchiveFile(destDir, name, content);
+  }
+}
+
+function findZipEocd(buf) {
+  // End-of-Central-Directory signature 0x06054b50; comment may trail up to 65535 bytes.
+  const sig = 0x06054b50;
+  const min = Math.max(0, buf.length - (22 + 65535));
+  for (let i = buf.length - 22; i >= min; i--) {
+    if (buf.readUInt32LE(i) === sig) return i;
+  }
+  return -1;
+}
+
+function writeArchiveFile(destDir, relPath, content) {
+  const target = safeArchivePath(destDir, relPath);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, content);
+}
+
+// Normalize an archive entry path and resolve it under destDir, refusing
+// anything that would escape destDir (zip-slip / tar traversal protection).
+function safeArchivePath(destDir, relPath) {
+  // Normalize separators and strip drive letters / leading slashes so a
+  // malicious absolute path can't redirect outside destDir.
+  const stripped = String(relPath)
+    .replace(/\\/g, '/')
+    .replace(/^([a-zA-Z]:)?\/+/, '');
+  const target = path.resolve(destDir, stripped);
+  const rel = path.relative(destDir, target);
+  // rel === '' means the entry is the dest root itself (e.g. "./"), which is fine.
+  if (rel.startsWith('..')) throw new Error(`Refusing unsafe archive entry: ${relPath}`);
+  return target;
 }
 
 // ════════════════════════════════════════════
@@ -467,4 +613,7 @@ async function main() {
   }
 }
 
-main();
+if (require.main === module) main();
+
+// Exposed for testing; not part of the CLI surface.
+module.exports = { extractTarGz, extractZip, extractTar, safeArchivePath };
