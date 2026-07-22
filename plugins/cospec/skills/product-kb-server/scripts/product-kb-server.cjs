@@ -100,11 +100,9 @@ async function cmdList(opts) {
   const res = await fetch(`${opts.server}/api/kb`, { headers: authHeaders(opts.token) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const { kbs } = await res.json();
-  console.log(`${'ID'.padEnd(20)} ${'NAME'.padEnd(24)} ${'STATUS'.padEnd(14)} VERSION`);
-  console.log('-'.repeat(75));
+  console.log('NAME\tDESCRIPTION');
   for (const kb of kbs) {
-    const vid = (kb.current_version_id ?? '-').slice(0, 14);
-    console.log(`${kb.id.padEnd(20)} ${kb.name.padEnd(24)} ${kb.status.padEnd(14)} ${vid}`);
+    console.log(`${kb.name}\t${kb.description ?? ''}`);
   }
 }
 
