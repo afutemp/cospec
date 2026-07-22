@@ -1,6 +1,6 @@
 {
   "name": "product-kb",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "面向产品规划的可追溯知识库工作流，并提供安全的 cospec manifest 到 IPD 同步能力",
   "author": {
     "name": "afutemp",
