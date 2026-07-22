@@ -2,6 +2,7 @@
 
 const crypto = require('node:crypto');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 
 const SCHEMA_VERSION = '1.0.0';
@@ -221,9 +222,10 @@ function renderIndex(skeleton, options = {}) {
     for (const s of shown) {
       // 清掉标题里的证据标记等反引号片段，保持索引清爽；骨架仍存原文供自检。
       const heading = s.heading.replace(/`[^`]*`/g, '').replace(/\s+/g, ' ').trim();
-      const kw = s.subHeadings.length ? `（含：${s.subHeadings.join(' / ')}）` : '';
-      const tail = s.excerpt ? ` — ${s.excerpt}` : '';
-      out.push(`- §${heading} (L${s.line})${tail}${kw ? ` ${kw}` : ''}`);
+      // 瘦身：文档目录只给 §标题(行号)+短摘要，不再堆子标题（子标题仍在骨架 JSON 里供语义步骤用）。
+      const excerpt = s.excerpt.length > 40 ? `${s.excerpt.slice(0, 40)}…` : s.excerpt;
+      const tail = excerpt ? ` — ${excerpt}` : '';
+      out.push(`- §${heading} (L${s.line})${tail}`);
     }
     // 无可导航章节的文档：优雅退化为文件级入口，明确标注而非静默留空。
     if (!shown.length) out.push('- _（本文档无可细分章节，整篇作为一个整体查阅）_');
@@ -315,6 +317,28 @@ function insertReadmePointer(root) {
   return 'inserted';
 }
 
+// 临时工作区：构建中间产物（骨架 + 草稿 INDEX）写在这里，位于知识库目录之外。
+// 按「知识库路径哈希 / session」两级隔离：
+//   - 知识库哈希做命名空间，天然隔离不同知识库；
+//   - session（build 时生成的唯一 id）隔离同一知识库的并发运行，
+//     两个任务同时给同一 KB 建索引也不会互相覆盖或误删。
+// verify/finalize 通过 --session 复算出自己的工作区，无需传完整路径。
+function workNamespaceFor(absRoot) {
+  const key = crypto.createHash('sha256').update(absRoot, 'utf8').digest('hex').slice(0, 16);
+  return path.join(os.tmpdir(), 'product-kb-index', key);
+}
+
+function workDirFor(absRoot, session) {
+  // session 只允许安全字符，防止越界写/删
+  const safe = String(session || '').replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!safe) throw new Error('缺少有效 session');
+  return path.join(workNamespaceFor(absRoot), safe);
+}
+
+function newSession() {
+  return crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+}
+
 // 源健康度报告：把无法很好规范化处理的文档显式列出，让人先知道源有多脏，
 // 而不是让索引静默地对脏数据尽力而为。纯只读，不改任何文件。
 function buildHealthReport(root) {
@@ -353,9 +377,14 @@ function buildHealthReport(root) {
   };
 }
 
+function argValue(argv, flag) {
+  const i = argv.indexOf(flag);
+  return i >= 0 && i + 1 < argv.length ? argv[i + 1] : '';
+}
+
 function main(argv = process.argv.slice(2)) {
   const root = argv[0];
-  if (!root) throw new Error('用法: build_index.js <knowledge-base-root> [--verify | --readme-pointer | --report]');
+  if (!root) throw new Error('用法: build_index.js <root> [--report | --verify [--session id] | --finalize --session id | --readme-pointer]');
   const absRoot = path.resolve(root);
 
   if (argv.includes('--report')) {
@@ -370,20 +399,50 @@ function main(argv = process.argv.slice(2)) {
     return;
   }
 
+  const session = argValue(argv, '--session');
+
   if (argv.includes('--verify')) {
-    const indexPath = path.join(absRoot, 'INDEX.md');
-    if (!fs.existsSync(indexPath)) throw new Error(`未找到 ${indexPath}`);
-    const bad = verifyRenderedIndex(absRoot, indexPath);
+    // 有 session → 校验该运行的临时草稿；否则回退校验已定稿的 <root>/INDEX.md（事后复核）
+    let target;
+    let kind;
+    if (session) { target = path.join(workDirFor(absRoot, session), 'INDEX.draft.md'); kind = 'draft'; }
+    else { target = path.join(absRoot, 'INDEX.md'); kind = 'committed'; }
+    if (!fs.existsSync(target)) {
+      throw new Error(session ? `未找到 session=${session} 的草稿，请确认构建时返回的 session` : '未找到已定稿 INDEX.md；定稿前校验请带 --session <构建返回的 id>');
+    }
+    const bad = verifyRenderedIndex(absRoot, target);
     if (bad.length) {
-      console.error(`INDEX.md 行号校验失败，共 ${bad.length} 处：`);
+      console.error(`INDEX 行号校验失败，共 ${bad.length} 处：`);
       for (const m of bad) console.error(`  ${m.doc || ''} | §${m.heading} @L${m.line} | 实际: ${m.actual}`);
       process.exitCode = 1;
       return;
     }
-    process.stdout.write(`${JSON.stringify({verify: 'ok'})}\n`);
+    process.stdout.write(`${JSON.stringify({verify: 'ok', target: kind})}\n`);
     return;
   }
 
+  if (argv.includes('--finalize')) {
+    // 定稿必须带 session：校验通过后才把该运行的草稿落进知识库，随后插指针并只删自己的临时区
+    if (!session) throw new Error('--finalize 必须带 --session <构建返回的 id>');
+    const workDir = workDirFor(absRoot, session);
+    const draftPath = path.join(workDir, 'INDEX.draft.md');
+    if (!fs.existsSync(draftPath)) throw new Error(`未找到 session=${session} 的草稿，请先构建并填充主题速查表`);
+    const bad = verifyRenderedIndex(absRoot, draftPath);
+    if (bad.length) {
+      console.error(`定稿前校验失败，共 ${bad.length} 处，未写入知识库：`);
+      for (const m of bad) console.error(`  ${m.doc || ''} | §${m.heading} @L${m.line} | 实际: ${m.actual}`);
+      process.exitCode = 1;
+      return;
+    }
+    fs.writeFileSync(path.join(absRoot, 'INDEX.md'), fs.readFileSync(draftPath, 'utf8'));
+    const readmePointer = insertReadmePointer(absRoot);
+    fs.rmSync(workDir, {recursive: true, force: true}); // 只删本 session 的工作区，不影响其它并发运行
+    process.stdout.write(`${JSON.stringify({finalized: true, session, index: path.join(absRoot, 'INDEX.md'), readmePointer, workDirRemoved: true})}\n`);
+    return;
+  }
+
+  // 默认构建：为本次运行生成唯一 session，中间产物写进该 session 的独立临时工作区。
+  // 同一知识库并发构建各自拥有独立 session，互不覆盖；知识库目录此刻零改动。
   const skeleton = buildSkeleton(absRoot);
   const mismatches = verifyLineNumbers(absRoot, skeleton);
   if (mismatches.length) {
@@ -393,23 +452,23 @@ function main(argv = process.argv.slice(2)) {
     return;
   }
 
-  const skeletonPath = path.join(absRoot, '.source', 'index-skeleton.json');
-  fs.mkdirSync(path.dirname(skeletonPath), {recursive: true});
+  const runSession = newSession();
+  const workDir = workDirFor(absRoot, runSession);
+  fs.mkdirSync(workDir, {recursive: true});
+  const skeletonPath = path.join(workDir, 'index-skeleton.json');
+  const draftPath = path.join(workDir, 'INDEX.draft.md');
   fs.writeFileSync(skeletonPath, `${JSON.stringify(skeleton, null, 2)}\n`);
+  const draft = renderIndex(skeleton, {title: path.basename(absRoot), topicTable: TOPIC_PLACEHOLDER});
+  fs.writeFileSync(draftPath, draft);
 
-  const draft = renderIndex(skeleton, {
-    title: path.basename(absRoot),
-    topicTable: TOPIC_PLACEHOLDER,
-  });
-  fs.writeFileSync(path.join(absRoot, 'INDEX.md'), draft);
-
-  // 附带健康度提示：让使用者知道有多少文档无法很好导航，索引已尽力退化处理
   const health = buildHealthReport(absRoot);
   process.stdout.write(`${JSON.stringify({
     docs: skeleton.docs.length,
+    session: runSession,
     skeleton: skeletonPath,
-    index: path.join(absRoot, 'INDEX.md'),
+    draftIndex: draftPath,
     lineCheck: 'ok',
+    kbUntouched: true,
     health: {
       healthy: health.healthy,
       noHeadings: health.noHeadings.length,
@@ -417,17 +476,18 @@ function main(argv = process.argv.slice(2)) {
       numberingIssues: health.numberingIssues.length,
       duplicateBasenames: health.duplicateBasenames.length,
     },
-    next: '如 health 非全零可先看 --report；再由语义步骤替换主题速查表占位，最后运行 --verify',
+    next: '编辑 draftIndex 填主题速查表 → --verify --session <session> → --finalize --session <session>',
   })}\n`);
 }
 
 if (require.main === module) {
-  try { main(); } catch (error) { console.error(`构建索引骨架失败: ${error.message}`); process.exitCode = 1; }
+  try { main(); } catch (error) { console.error(`构建索引失败: ${error.message}`); process.exitCode = 1; }
 }
 
 module.exports = {
   SCHEMA_VERSION, fingerprint, markdownFiles, parseFrontmatter, parseDoc,
   computeFenceMask, extractHeadings, headingTextAt, pickSectionLevel,
   buildSkeleton, verifyLineNumbers, verifyRenderedIndex, resolveDocPath,
-  renderIndex, insertReadmePointer, buildHealthReport, isMetaHeading, TOPIC_PLACEHOLDER, main,
+  renderIndex, insertReadmePointer, buildHealthReport,
+  workNamespaceFor, workDirFor, newSession, isMetaHeading, TOPIC_PLACEHOLDER, main,
 };
