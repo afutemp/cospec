@@ -239,43 +239,9 @@ async function cmdCheckUpdate(opts) {
 // KB root detection
 // ════════════════════════════════════════════
 function detectKbRoot(extractedDir) {
-  // 1. Prefer an explicit raw/ directory if present.
-  const rawDir = findDir(extractedDir, 'raw');
-  if (rawDir && hasKnowledgeBaseFiles(rawDir)) return rawDir;
-
-  // 2. If the archive has a single top-level directory that looks like a KB root,
-  //    use its contents (e.g. vdi-kb/README.md, vdi-kb/00-综述/...).
-  const entries = fs.readdirSync(extractedDir, { withFileTypes: true });
-  const dirs = entries.filter(e => e.isDirectory() && e.name !== '__MACOSX');
-  if (dirs.length === 1 && !entries.some(e => e.isFile())) {
-    const candidate = path.join(extractedDir, dirs[0].name);
-    if (hasKnowledgeBaseFiles(candidate)) return candidate;
-  }
-
-  // 3. Otherwise use the extracted root as-is.
+  // KB-server now returns archives exactly as they were uploaded:
+  // no raw/ wrapper, no manifest.json. Use the extracted root as-is.
   return extractedDir;
-}
-
-function hasKnowledgeBaseFiles(dir) {
-  try {
-    return countFiles(dir) > 0 || fs.readdirSync(dir).some(n => n.endsWith('.md'));
-  } catch {
-    return false;
-  }
-}
-
-function findDir(root, name) {
-  const queue = [root];
-  while (queue.length) {
-    const dir = queue.shift();
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      if (entry.isDirectory()) {
-        if (entry.name === name) return path.join(dir, entry.name);
-        queue.push(path.join(dir, entry.name));
-      }
-    }
-  }
-  return null;
 }
 
 // ════════════════════════════════════════════
