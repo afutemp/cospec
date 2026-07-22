@@ -14,7 +14,9 @@ const USAGE = `Usage: product-kb-server <command> [options]
 
 Commands:
   list                          List all knowledge bases
+  check-update --kb <name>      Check if local KB is up to date
   download --kb <name> [--output <dir>] [--format tar.gz|zip]
+  delete   --kb <name>          Delete a locally downloaded knowledge base
   upload   --kb <name> --files <glob> [--token <tok>]
 
 Options:
@@ -23,8 +25,10 @@ Options:
 
 Examples:
   product-kb-server list
+  product-kb-server check-update --kb <kb-name-or-id>
   product-kb-server download --kb <kb-name-or-id>
   product-kb-server download --kb <kb-name-or-id> --output ./docs
+  product-kb-server delete --kb <kb-name-or-id>
   product-kb-server upload --kb <kb-name-or-id> --files "./docs/*.md"
 `;
 
@@ -65,6 +69,26 @@ function getGlobalKbRoot() {
   return path.join(os.homedir(), `.${getPluginName()}`, 'kb');
 }
 
+const VERSION_FILE = '.kb-version';
+
+function getVersionFilePath(outputDir) {
+  return path.join(outputDir, VERSION_FILE);
+}
+
+function readLocalVersion(outputDir) {
+  const versionPath = getVersionFilePath(outputDir);
+  try {
+    return fs.readFileSync(versionPath, 'utf8').trim();
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalVersion(outputDir, version) {
+  const versionPath = getVersionFilePath(outputDir);
+  fs.writeFileSync(versionPath, `${version}\n`);
+}
+
 function sanitizeKbName(name) {
   if (!name) return 'unnamed-kb';
   let safe = name
@@ -100,11 +124,9 @@ async function cmdList(opts) {
   const res = await fetch(`${opts.server}/api/kb`, { headers: authHeaders(opts.token) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const { kbs } = await res.json();
-  console.log(`${'ID'.padEnd(20)} ${'NAME'.padEnd(24)} ${'STATUS'.padEnd(14)} VERSION`);
-  console.log('-'.repeat(75));
+  console.log('NAME\tDESCRIPTION');
   for (const kb of kbs) {
-    const vid = (kb.current_version_id ?? '-').slice(0, 14);
-    console.log(`${kb.id.padEnd(20)} ${kb.name.padEnd(24)} ${kb.status.padEnd(14)} ${vid}`);
+    console.log(`${kb.name}\t${kb.description ?? ''}`);
   }
 }
 
@@ -116,7 +138,25 @@ async function cmdDownload(opts) {
   if (!kb) throw new Error(`KB '${opts.kb}' not found. Run 'list' to see available KBs.`);
 
   const outputDir = opts.output || getDefaultKbDir(kb.name);
+  const serverVersion = kb.current_version_id ?? null;
+  const localVersion = readLocalVersion(outputDir);
+
+  if (serverVersion && localVersion && serverVersion === localVersion) {
+    console.log(`[download] ${kb.name} is up to date (${localVersion}) — skipping`);
+    const configResult = configureKbLocalPath(outputDir);
+    if (configResult.ok) {
+      console.log(`[config] updated ${configResult.file}`);
+      console.log(`[config] kb.localPath = ${configResult.localPath}`);
+    }
+    return;
+  }
+
   console.log(`[download] ${kb.name} (${kb.id}) → ${outputDir}`);
+  if (localVersion && serverVersion) {
+    console.log(`[download] updating ${localVersion} → ${serverVersion}`);
+  } else if (serverVersion) {
+    console.log(`[download] server version ${serverVersion}`);
+  }
 
   const url = `${opts.server}/api/kb/${kb.id}/download?format=${opts.format}`;
   const res = await fetch(url, { headers: authHeaders(opts.token) });
@@ -150,6 +190,10 @@ async function cmdDownload(opts) {
     const kbRoot = detectKbRoot(tmp);
     copyDir(kbRoot, outputDir);
 
+    if (serverVersion) {
+      writeLocalVersion(outputDir, serverVersion);
+    }
+
     const count = countFiles(outputDir);
     console.log(`[download] done — ${count} documents in ${outputDir}`);
 
@@ -166,46 +210,69 @@ async function cmdDownload(opts) {
 }
 
 // ════════════════════════════════════════════
+// check-update
+// ════════════════════════════════════════════
+async function cmdCheckUpdate(opts) {
+  const kb = await resolveKb(opts.server, opts.token, opts.kb);
+  if (!kb) throw new Error(`KB '${opts.kb}' not found. Run 'list' to see available KBs.`);
+
+  const outputDir = opts.output || getDefaultKbDir(kb.name);
+  const serverVersion = kb.current_version_id ?? null;
+  const localVersion = readLocalVersion(outputDir);
+
+  if (!serverVersion) {
+    console.log(`[check-update] ${kb.name}: server version unknown — cannot compare`);
+    return;
+  }
+
+  if (!localVersion) {
+    console.log(`[check-update] ${kb.name}: not downloaded locally (server: ${serverVersion})`);
+    return;
+  }
+
+  if (serverVersion === localVersion) {
+    console.log(`[check-update] ${kb.name}: up to date (${localVersion})`);
+  } else {
+    console.log(`[check-update] ${kb.name}: update available (${localVersion} → ${serverVersion})`);
+  }
+}
+
+// ════════════════════════════════════════════
+// delete
+// ════════════════════════════════════════════
+async function cmdDelete(opts) {
+  if (!opts.kb) throw new Error("delete requires --kb <kb-name-or-id>");
+
+  const outputDir = opts.output || getDefaultKbDir(opts.kb);
+  const resolvedOutput = path.resolve(outputDir);
+
+  if (!fs.existsSync(outputDir)) {
+    console.log(`[delete] ${opts.kb}: not found locally at ${outputDir}`);
+    return;
+  }
+
+  // Safety: only delete directories inside the managed global KB root or an explicit --output.
+  if (!opts.output && !isManagedGlobalPath(outputDir)) {
+    throw new Error(`Refusing to delete ${outputDir}: not inside managed KB root. Use --output to specify an explicit directory.`);
+  }
+
+  fs.rmSync(outputDir, { recursive: true, force: true });
+  console.log(`[delete] ${opts.kb}: removed ${outputDir}`);
+
+  // If cospec.config.json points to this directory, clear kb.localPath.
+  const clearResult = clearKbLocalPath(resolvedOutput);
+  if (clearResult.ok) {
+    console.log(`[config] cleared kb.localPath in ${clearResult.file}`);
+  }
+}
+
+// ════════════════════════════════════════════
 // KB root detection
 // ════════════════════════════════════════════
 function detectKbRoot(extractedDir) {
-  // 1. Prefer an explicit raw/ directory if present.
-  const rawDir = findDir(extractedDir, 'raw');
-  if (rawDir && hasKnowledgeBaseFiles(rawDir)) return rawDir;
-
-  // 2. If the archive has a single top-level directory that looks like a KB root,
-  //    use its contents (e.g. vdi-kb/README.md, vdi-kb/00-综述/...).
-  const entries = fs.readdirSync(extractedDir, { withFileTypes: true });
-  const dirs = entries.filter(e => e.isDirectory() && e.name !== '__MACOSX');
-  if (dirs.length === 1 && !entries.some(e => e.isFile())) {
-    const candidate = path.join(extractedDir, dirs[0].name);
-    if (hasKnowledgeBaseFiles(candidate)) return candidate;
-  }
-
-  // 3. Otherwise use the extracted root as-is.
+  // KB-server now returns archives exactly as they were uploaded:
+  // no raw/ wrapper, no manifest.json. Use the extracted root as-is.
   return extractedDir;
-}
-
-function hasKnowledgeBaseFiles(dir) {
-  try {
-    return countFiles(dir) > 0 || fs.readdirSync(dir).some(n => n.endsWith('.md'));
-  } catch {
-    return false;
-  }
-}
-
-function findDir(root, name) {
-  const queue = [root];
-  while (queue.length) {
-    const dir = queue.shift();
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      if (entry.isDirectory()) {
-        if (entry.name === name) return path.join(dir, entry.name);
-        queue.push(path.join(dir, entry.name));
-      }
-    }
-  }
-  return null;
 }
 
 // ════════════════════════════════════════════
@@ -242,6 +309,45 @@ function configureKbLocalPath(outputDir) {
   }
 
   return { ok: true, file: configPath, localPath: absPath };
+}
+
+function clearKbLocalPath(outputDir) {
+  const pluginRoot = getPluginRoot();
+  const configPath = path.join(pluginRoot, 'cospec.config.json');
+
+  if (!fs.existsSync(configPath)) {
+    return { ok: false, error: 'config file not found' };
+  }
+
+  let config;
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  } catch (e) {
+    return { ok: false, error: `failed to parse ${configPath}: ${e.message}` };
+  }
+
+  if (!config.kb || typeof config.kb !== 'object') {
+    return { ok: false, error: 'kb config missing' };
+  }
+
+  const configPathValue = config.kb.localPath;
+  if (!configPathValue) {
+    return { ok: false, error: 'kb.localPath not set' };
+  }
+
+  if (path.resolve(configPathValue) !== path.resolve(outputDir)) {
+    return { ok: false, error: 'kb.localPath points to a different directory' };
+  }
+
+  config.kb.localPath = null;
+
+  try {
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
+  } catch (e) {
+    return { ok: false, error: `failed to write ${configPath}: ${e.message}` };
+  }
+
+  return { ok: true, file: configPath };
 }
 
 function copyDir(src, dest) {
@@ -348,9 +454,11 @@ async function main() {
 
   try {
     switch (opts.command) {
-      case 'list':     await cmdList(opts); break;
-      case 'download': await cmdDownload(opts); break;
-      case 'upload':   await cmdUpload(opts); break;
+      case 'list':          await cmdList(opts); break;
+      case 'check-update':  await cmdCheckUpdate(opts); break;
+      case 'download':      await cmdDownload(opts); break;
+      case 'delete':        await cmdDelete(opts); break;
+      case 'upload':        await cmdUpload(opts); break;
       default: console.error(`Unknown command: ${opts.command}`); console.log(USAGE); process.exit(1);
     }
   } catch (e) {
