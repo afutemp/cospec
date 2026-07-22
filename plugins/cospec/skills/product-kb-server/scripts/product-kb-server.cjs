@@ -58,7 +58,7 @@ function getPluginRoot() {
 }
 
 function getPluginName() {
-  return path.basename(getPluginRoot());
+  return 'cospec';
 }
 
 function getGlobalKbRoot() {
