@@ -16,6 +16,7 @@ Commands:
   list                          List all knowledge bases
   check-update --kb <name>      Check if local KB is up to date
   download --kb <name> [--output <dir>] [--format tar.gz|zip]
+  delete   --kb <name>          Delete a locally downloaded knowledge base
   upload   --kb <name> --files <glob> [--token <tok>]
 
 Options:
@@ -27,6 +28,7 @@ Examples:
   product-kb-server check-update --kb <kb-name-or-id>
   product-kb-server download --kb <kb-name-or-id>
   product-kb-server download --kb <kb-name-or-id> --output ./docs
+  product-kb-server delete --kb <kb-name-or-id>
   product-kb-server upload --kb <kb-name-or-id> --files "./docs/*.md"
 `;
 
@@ -236,6 +238,35 @@ async function cmdCheckUpdate(opts) {
 }
 
 // ════════════════════════════════════════════
+// delete
+// ════════════════════════════════════════════
+async function cmdDelete(opts) {
+  if (!opts.kb) throw new Error("delete requires --kb <kb-name-or-id>");
+
+  const outputDir = opts.output || getDefaultKbDir(opts.kb);
+  const resolvedOutput = path.resolve(outputDir);
+
+  if (!fs.existsSync(outputDir)) {
+    console.log(`[delete] ${opts.kb}: not found locally at ${outputDir}`);
+    return;
+  }
+
+  // Safety: only delete directories inside the managed global KB root or an explicit --output.
+  if (!opts.output && !isManagedGlobalPath(outputDir)) {
+    throw new Error(`Refusing to delete ${outputDir}: not inside managed KB root. Use --output to specify an explicit directory.`);
+  }
+
+  fs.rmSync(outputDir, { recursive: true, force: true });
+  console.log(`[delete] ${opts.kb}: removed ${outputDir}`);
+
+  // If cospec.config.json points to this directory, clear kb.localPath.
+  const clearResult = clearKbLocalPath(resolvedOutput);
+  if (clearResult.ok) {
+    console.log(`[config] cleared kb.localPath in ${clearResult.file}`);
+  }
+}
+
+// ════════════════════════════════════════════
 // KB root detection
 // ════════════════════════════════════════════
 function detectKbRoot(extractedDir) {
@@ -278,6 +309,45 @@ function configureKbLocalPath(outputDir) {
   }
 
   return { ok: true, file: configPath, localPath: absPath };
+}
+
+function clearKbLocalPath(outputDir) {
+  const pluginRoot = getPluginRoot();
+  const configPath = path.join(pluginRoot, 'cospec.config.json');
+
+  if (!fs.existsSync(configPath)) {
+    return { ok: false, error: 'config file not found' };
+  }
+
+  let config;
+  try {
+    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  } catch (e) {
+    return { ok: false, error: `failed to parse ${configPath}: ${e.message}` };
+  }
+
+  if (!config.kb || typeof config.kb !== 'object') {
+    return { ok: false, error: 'kb config missing' };
+  }
+
+  const configPathValue = config.kb.localPath;
+  if (!configPathValue) {
+    return { ok: false, error: 'kb.localPath not set' };
+  }
+
+  if (path.resolve(configPathValue) !== path.resolve(outputDir)) {
+    return { ok: false, error: 'kb.localPath points to a different directory' };
+  }
+
+  config.kb.localPath = null;
+
+  try {
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
+  } catch (e) {
+    return { ok: false, error: `failed to write ${configPath}: ${e.message}` };
+  }
+
+  return { ok: true, file: configPath };
 }
 
 function copyDir(src, dest) {
@@ -387,6 +457,7 @@ async function main() {
       case 'list':          await cmdList(opts); break;
       case 'check-update':  await cmdCheckUpdate(opts); break;
       case 'download':      await cmdDownload(opts); break;
+      case 'delete':        await cmdDelete(opts); break;
       case 'upload':        await cmdUpload(opts); break;
       default: console.error(`Unknown command: ${opts.command}`); console.log(USAGE); process.exit(1);
     }
