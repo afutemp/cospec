@@ -1,6 +1,6 @@
 {
   "_comment": "cospec plugin configuration. Run 'cospec-configure' skill to replace any value with your own path, skill name, or credential.",
-  "_version": "1.0.14",
+  "_version": "1.0.15",
   "_updated": "2026-07-21",
   "project": {
     "_comment": "Project metadata. 'product' identifies the product line (e.g., SCC, SCP, DMP).",
