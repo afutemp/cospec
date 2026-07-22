@@ -76,6 +76,11 @@ KB_ROOT: product-kb/
       - 如果匹配到一个明显最相关的知识库，自动执行下载。
       - 如果匹配不到或不确定，返回错误："发现多个可用知识库（`vdi`, `xxx`, `yyy`），无法自动判断。请先运行 `/product-kb-server download --kb <name>` 指定要下载的知识库，或手动配置 cospec.config.json。"
    5. 下载完成后，`product-kb-server` 会自动把 `kb.localPath` 写回 `cospec.config.json`，然后继续查询。
+   6. **下载状态提示**：根据 `download` 命令的输出判断是否实际发生了下载/更新：
+      - 如果输出包含 `is up to date ... skipping`，说明本地已经是最新版，**不需要额外提示**。
+      - 如果输出包含 `done — N documents` 或 `updating ...`，说明确实执行了下载或更新。在最终回答开头先向用户说明：
+        > "已为你下载/更新知识库 `vdi`（版本 `ver_xxx`），共 N 个文档。以下是查询结果："
+      - 提示中应包含知识库名称、版本号（从 `download` 输出中提取）和文档数量。
 
 ### 2. 读取检索索引
 
