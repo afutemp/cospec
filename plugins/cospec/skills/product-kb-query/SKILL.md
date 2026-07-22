@@ -60,11 +60,21 @@ KB_ROOT: product-kb/
 
 ## Workflow
 
-### 1. 读取配置并定位知识库根目录
+### 1. 读取配置、定位并更新知识库根目录
 
-1. **解析传入参数**：如果参数以 `KB_ROOT:` 开头，提取该前缀后面的路径作为知识库根目录，剩余部分作为问题。例如 `KB_ROOT: product-kb/\n\n认证方式有哪些？` → 根目录 `product-kb/`，问题 `认证方式有哪些？`。
+**每次查询前都必须先尝试更新知识库**，确保本地不是旧版本。`product-kb-server download` 会自动比对服务器 `current_version_id` 和本地 `.kb-version`，一致则跳过，不一致则更新。
+
+1. **解析传入参数**：如果参数以 `KB_ROOT:` 开头，提取该前缀后面的路径作为知识库根目录，剩余部分作为问题。例如 `KB_ROOT: product-kb/\n\n认证方式有哪些？` → 根目录 `product-kb/`，问题 `认证方式有哪些？`。`KB_ROOT:` 显式指定时跳过更新检查，直接使用该目录。
 2. 如果参数中没有 `KB_ROOT:`，则读取 `<plugin-root>/cospec.config.json` 的 `kb.localPath`。
-3. **如果 `kb.localPath` 未配置（`null`），或配置的目录不存在、或不包含任何 `.md` 文件，自动尝试通过 `product-kb-server` 下载知识库：**
+3. **尝试更新当前知识库：**
+   - 如果 `kb.localPath` 已配置且目录有效、包含 `.md` 文件：
+     - 从 `kb.localPath` 推断当前知识库名称：取路径的 basename（例如 `~/.cospec/kb/vdi/` → `vdi`）。
+     - 调用 `<plugin-root>/skills/product-kb-server/scripts/product-kb-server.cjs download --kb <kb-name>` 触发更新检查。
+     - 如果 `download` 输出包含 `is up to date ... skipping`，继续查询，不额外提示。
+     - 如果 `download` 输出包含 `done` 或 `updating`，说明执行了下载/更新，在最终回答开头提示：
+       > "已为你下载/更新知识库 `vdi`。以下是查询结果："
+   - 如果推断的 KB 名称在服务器上不存在（download 报错），则放弃更新检查，继续使用本地现有知识库查询，并在回答中标注"未能检查知识库更新，使用本地版本"。
+4. **如果 `kb.localPath` 未配置（`null`），或配置的目录不存在、或不包含任何 `.md` 文件，自动尝试通过 `product-kb-server` 下载知识库：**
    1. 调用 `<plugin-root>/skills/product-kb-server/scripts/product-kb-server.cjs list` 获取可用知识库列表（输出格式为 `NAME\tDESCRIPTION`）。
    2. 如果列表为空，返回错误："kb-server 上没有可用知识库，请联系管理员上传。"
    3. 如果列表中只有 1 个知识库，自动执行下载：
@@ -75,12 +85,9 @@ KB_ROOT: product-kb/
       - 将当前问题、前文上下文中的关键词与各知识库的 `DESCRIPTION` 进行语义匹配，挑选最相关的一个。
       - 如果匹配到一个明显最相关的知识库，自动执行下载。
       - 如果匹配不到或不确定，返回错误："发现多个可用知识库（`vdi`, `xxx`, `yyy`），无法自动判断。请先运行 `/product-kb-server download --kb <name>` 指定要下载的知识库，或手动配置 cospec.config.json。"
-   5. 下载完成后，`product-kb-server` 会自动把 `kb.localPath` 写回 `cospec.config.json`，然后继续查询。
-   6. **下载状态提示**：根据 `download` 命令的输出判断是否实际发生了下载/更新：
-      - 如果输出包含 `is up to date ... skipping`，说明本地已经是最新版，**不需要额外提示**。
-      - 如果输出包含 `done — N documents` 或 `updating ...`，说明确实执行了下载或更新。在最终回答开头先向用户说明：
-        > "已为你下载/更新知识库 `vdi`。以下是查询结果："
-      - 提示中应包含知识库名称。
+   5. 下载完成后，`product-kb-server` 会自动把 `kb.localPath` 写回 `cospec.config.json`。
+   6. 如果实际发生了下载/更新，在最终回答开头提示：
+      > "已为你下载/更新知识库 `vdi`。以下是查询结果："
 
 ### 2. 读取检索索引
 
@@ -150,7 +157,7 @@ KB_ROOT: product-kb/
 - 标注不确定性：遇到 `[OPEN]`、`待确认`、`待验证` 时，明确告诉调用方该信息尚未确认。
 - 引用路径：尽量使用相对路径引用来源文档。
 - 被其他 skill 调用时，不主动追问用户；若信息不足，直接返回"当前知识库未覆盖该问题"。
-- 当 `kb.localPath` 未配置且 kb-server 上只有一个可用知识库时，允许自动调用 `product-kb-server` 下载并更新配置；除此之外保持只读，不生成或修改任何文档、索引、Meta 和报告。
+- 当 `kb.localPath` 已配置时，每次查询前主动调用 `product-kb-server download` 检查/更新知识库；当未配置时，自动下载知识库。除此之外保持只读，不生成或修改任何文档、索引、Meta 和报告。
 
 ## Resources
 
