@@ -24,7 +24,7 @@ Before you make changes to this repo, you MUST:
 | `large-requirement-workflow` | Dispatched by `brainstorming` for the full large-requirement pipeline; offers the optional Demo handoff after TR1 and before TR2 |
 | `small-requirement-workflow` | Dispatched by `brainstorming` for small requirements (clarify + journey + TR1), followed by an optional Demo handoff |
 | `generate-demo` | Direct invocation, explicit opt-in after large-requirement TR1, or opt-in after a small-requirement workflow; sends only user-confirmed Markdown |
-| `sync-to-ipd` | Direct invocation for previewed, explicitly confirmed synchronization of large-requirement TR1/TR2 artifacts through `qianliu-ipd` |
+| `sync-to-ipd` | Direct invocation for previewed, explicitly confirmed synchronization of large-requirement TR1/TR2 artifacts through its bundled IPD provider |
 
 ### Pipeline
 
@@ -67,7 +67,7 @@ brainstorming（路由器：询问用户选择 → 确认 → 分发）
 | `large-requirement-workflow` | 大需求工作流编排器：TR1 完成后可选生成 Demo，再继续 TR2 |
 | `small-requirement-workflow` | 小需求工作流编排器：串行调用 3 个规划 leaf skill，完成后可选生成 Demo |
 | `generate-demo` | 独立调用、大需求 TR1 后调用或小需求工作流后调用：确认文件、dry-run、签名提交并返回 Demo 链接 |
-| `sync-to-ipd` | 独立调用：发现大需求产物、选择 IPD 目标、生成差异预览并在最终确认后同步 |
+| `sync-to-ipd` | 独立调用：通过内置 provider 发现大需求产物、选择 IPD 目标、生成差异预览并在最终确认后同步，不依赖 IPD MCP 工具 |
 | `product-kb-query` | 产品知识库查询：为 leaf skills 按需注入知识库上下文 |
 | `product-kb-server` | 通过 kb-server REST API 管理知识库：列出、下载文档到本地、上传附件 |
 | `product-planning-requirement-clarification` | 需求澄清：原始想法 → "想全面"的澄清结果 |

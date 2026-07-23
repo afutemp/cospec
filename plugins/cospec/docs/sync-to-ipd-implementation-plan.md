@@ -4,7 +4,7 @@
 
 新增独立 Skill `sync-to-ipd`，将 cospec 大需求流程生成的 Epic、Feature、Story、Tech 同步为 IPD 需求条目，并同步大需求 TR1 评审版和 AI 上下文版文档。
 
-`sync-to-ipd` 作为 cospec 侧适配器，复用 product-kb 插件提供的 `qianliu-ipd` 能力，不复制 IPD API 实现。
+`sync-to-ipd` 作为 cospec 侧适配器，通过自身的 `scripts/ipd-provider.cjs` 复用同一 cospec 插件内的 `qianliu-ipd` 能力，不复制 IPD API 实现，也不依赖嵌套 Skill 或 MCP 工具调用。
 
 ## 调用与交互
 
@@ -13,7 +13,7 @@
 执行流程固定如下：
 
 1. 扫描指定目录；未指定时扫描当前工作目录下的 `product-planning/`。展示 TR1 文件和 Epic、Feature、Story、Tech 数量；存在多套完整产物时要求用户选择。
-2. 检查 `qianliu-ipd` 和本地 Token。依赖缺失时停止并给出安装指引；Token 缺失时要求用户在本地配置，禁止在对话、文件和日志中输入或输出 Token。
+2. 通过 `ipd-provider.cjs` 检查同一插件内的 `qianliu-ipd` 脚本和本地 Token。脚本缺失时停止并要求更新 cospec；Token 缺失时要求用户在本地配置，禁止在对话、命令、文件和日志中输入或输出 Token。
 3. 查询并选择现有 IPD 产品、项目、版本和团队。可复用上次目标，但必须让用户确认；v1 不创建产品、项目或版本。
 4. 查询真实阶段、活动和交付物列表，由用户明确选择 TR1 评审版对应的交付物，不做模糊匹配。
 5. TR1 评审版上传至所选交付物，AI 上下文版上传至根 Epic 附件；没有合适交付物时，两份文档都上传至根 Epic 附件。只有一个根 Epic时自动选择，多个时要求用户选择。
@@ -24,7 +24,9 @@
 
 ## 接口与状态
 
-`qianliu-ipd` 新增 `syncManifest` 动作和 `sync_from_manifest.js`，保留原有 `sync_from_docs.js`。动作接收 `mode=preview|apply`、`manifestPath`、`indexPath`、产品、项目、版本、团队 ID、TR1 路由和 `expectedPlanHash`。`preview` 禁止调用写接口，`apply` 必须校验哈希一致。
+`qianliu-ipd` 提供 `syncManifest` 和 `sync_from_manifest.js`。`sync-to-ipd/scripts/ipd-provider.cjs` 将产品、项目、版本、团队、阶段、活动、交付物查询以及 `syncManifest` 暴露为确定性 CLI action。它直接解析同一插件内的 provider 路径，不查询会话工具列表。
+
+`syncManifest` 接收 `mode=preview|apply`、`manifestPath`、`indexPath`、产品、项目、版本、团队 ID、TR1 路由和 `expectedPlanHash`。`preview` 禁止调用写接口，`apply` 必须校验哈希一致。
 
 新生成的 TR2 文档增加稳定元数据：
 
@@ -53,7 +55,7 @@ v1 仅同步名称、描述、层级、项目、版本、团队和 Tech 工作�
 - 单元测试覆盖产物发现、缺失 TR1、多套产物、多个根 Epic、旧文档迁移、层级错误、稳定 ID 冲突、创建、更新、重命名、幂等、部分失败恢复和索引失效。
 - 安全测试证明 `preview` 零写调用、Token 不进入输出、计划漂移阻断执行、未确认不得写入、依赖或配置缺失时安全停止。
 - TR1 测试覆盖交付物上传、无交付物回退、根 Epic 选择、哈希跳过和内容变化后的替换。
-- 保持 product-kb 和 cospec 既有测试通过，并运行 Node 语法检查、Skill 校验、JSON、YAML 校验和 `git diff --check`。
+- 保持合并进 cospec 的 product-kb-core 和 cospec 既有测试通过，并运行 Node 语法检查、Skill 校验、JSON、YAML 校验和 `git diff --check`。
 - 真实 IPD 冒烟测试只在用户另行确认后使用非生产项目执行。
 
 ## 边界
@@ -74,6 +76,9 @@ v1 仅同步名称、描述、层级、项目、版本、团队和 Tech 工作�
 
 ### 自动化与静态验证
 
+- 2026-07-23 RED：安装态场景只有 `sync-to-ipd` Skill 和 shell，没有任何 IPD MCP 工具；测试因缺少 `scripts/ipd-provider.cjs` 直接失败，复现了代理在“调用 IPD 查询”处停止的问题。
+- 2026-07-23 GREEN：新增 provider 后，同一场景可解析同一 cospec 插件内的 `qianliu-ipd` API 和 manifest provider；目标查询通过注入 API 执行，预览写入本地文件，apply 缺少确认哈希时被阻断。
+- 2026-07-23 全量回归：provider 测试 7/7、同步相关测试 25/25、cospec 完整测试套件 89/89 通过；插件、版本、Node 语法、JSON、YAML、diff 和敏感信息检查通过，原始 IPD 错误响应不会进入 CLI 输出。真实只读 IPD 探测被当前 `ECONNRESET` 阻断；GitLab 源码与已安装缓存中的 `ipd_api.js` 哈希一致，且两者在同一网络边界失败，因此未归因为 provider 回归，也未继续重试。
 - cospec 侧 `generate-demo` 与 `sync-to-ipd` 合并测试共 22 项通过，其中 `sync-to-ipd` 覆盖产物发现、TR1 完整性、稳定 ID、层级、旧文档冲突、索引绑定和 Tech 工作量校验。
 - product-kb 侧核心测试与 `syncManifest` 合并测试共 50 项通过，覆盖只读预览、计划哈希、冲突、幂等、部分失败检查点、TR1 路由和敏感错误清洗。
 - Node 语法检查、JSON 解析、YAML 解析、插件版本审计、Claude 插件校验和 `git diff --check` 通过。
