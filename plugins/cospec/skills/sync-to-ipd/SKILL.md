@@ -11,13 +11,14 @@ Other skills reference this skill as `sync-to-ipd`.
 
 ## Overview
 
-Preview and safely synchronize one complete cospec large-requirement artifact set through the external `qianliu-ipd` Skill. Never implement or call private IPD HTTP endpoints from this Skill.
+Preview and safely synchronize one complete cospec large-requirement artifact set through the deterministic provider bundled with this Skill. The provider reuses the co-located `qianliu-ipd` scripts inside the same cospec plugin; it does not require an MCP tool or nested Skill invocation.
 
 ## Hard Gates
 
 - Support only a complete large-requirement set containing both TR1 documents and TR2 Epic, Feature, Story, and Tech documents.
-- Require `qianliu-ipd`. If it is unavailable, stop and tell the user to reinstall/update the cospec plugin. Do not install anything automatically.
-- Read credentials only through `qianliu-ipd`. Never request, print, persist, or place a Token in a command.
+- Execute `scripts/ipd-provider.cjs` for every IPD query, preview, and apply operation. Never treat `getProducts`, `syncManifest`, or another action name as an MCP tool.
+- The provider must resolve the sibling `qianliu-ipd/scripts/` directory inside the installed cospec plugin. If it is unavailable, stop and tell the user to reinstall or update cospec. Do not install anything automatically.
+- Read credentials only through the bundled IPD provider. Never request, print, persist, or place a Token in a command.
 - Never create an IPD product, project, version, or deliverable. Never delete an IPD issue.
 - Never write to IPD during discovery or preview.
 - Require the literal reply `确认执行` after showing the final preview. No earlier request, short continuation, or previous confirmation authorizes apply.
@@ -65,13 +66,31 @@ Do not infer a single parent from a cross-Feature Tech document. Keep the other 
 
 ### 2. Resolve the existing IPD target
 
-Invoke `qianliu-ipd` read actions to show names and statuses, then let the user select the existing product, project, version, and team. Do not require the user to know numeric IDs.
+Set `<provider>` to `<this-skill-dir>/scripts/ipd-provider.cjs`. Execute its read-only actions to show names and statuses, then let the user select the existing product, project, version, and team. Do not require the user to know numeric IDs.
 
-Use `getProducts`, `getProductProjects`, `getProjectVersions`, and `getTeamsByProject`. If the local index contains a previous target, show it and ask the user to confirm reuse.
+```bash
+node <provider> --action getProducts --keyword <product-keyword>
+node <provider> --action getProductProjects --product-id <product-id>
+node <provider> --action getProjectVersions --project-id <project-id>
+node <provider> --action getTeamsByProject --project-id <project-id>
+```
+
+These are CLI actions, not tool names. If the local index contains a previous target, show it and ask the user to confirm reuse.
 
 ### 3. Select TR1 destinations
 
-Use `getProjectStages`, `getStageActivities`, and `getActivityDeliverables` to show the real deliverables in the selected project version. Do not fuzzy-match a deliverable name.
+Use the same provider to show the real stages, activities, and deliverables in the selected project version. Do not fuzzy-match a deliverable name.
+
+```bash
+node <provider> --action getProjectStages \
+  --project-id <project-id> \
+  --version-id <version-id>
+node <provider> --action getStageActivities \
+  --stage-id <stage-id> \
+  --version-id <version-id>
+node <provider> --action getActivityDeliverables \
+  --activity-id <activity-id>
+```
 
 - Upload the TR1 review document to the deliverable explicitly selected by the user.
 - Upload the TR1 AI context document as an attachment on the selected root Epic.
@@ -80,7 +99,25 @@ Use `getProjectStages`, `getStageActivities`, and `getActivityDeliverables` to s
 
 ### 4. Preview
 
-Invoke `qianliu-ipd` with `action: syncManifest`, `mode: preview`, the manifest and index paths, selected target IDs, TR1 routing, and `<artifact-root>/.ipd-sync/preview.md`.
+Execute the bundled provider in preview mode with the manifest and index paths, selected target IDs, TR1 routing, and `<artifact-root>/.ipd-sync/preview.md`:
+
+```bash
+node <provider> \
+  --action syncManifest \
+  --mode preview \
+  --manifest <artifact-root>/.ipd-sync/manifest.json \
+  --index <artifact-root>/.ipd-sync/index.json \
+  --product-id <product-id> \
+  --project-id <project-id> \
+  --version-id <version-id> \
+  --team-id <team-id> \
+  --root-epic-artifact-id <root-epic-artifact-id> \
+  --review-deliverable-id <deliverable-id> \
+  --review-activity-id <activity-id> \
+  --preview-file <artifact-root>/.ipd-sync/preview.md
+```
+
+When both TR1 documents route to the root Epic, omit `--review-deliverable-id` and `--review-activity-id`.
 
 Show the target names, counts for create/update/upload/unchanged/conflict, TR1 destinations, and the plan hash. State that the plan will not delete issues, create project containers, or modify status, owner, or priority.
 
@@ -105,7 +142,7 @@ Ask exactly:
 以上预览将创建 {create} 条、更新 {update} 条、上传 {upload} 份 TR1 文档。请回复“确认执行”或“取消”。
 ```
 
-Only after `确认执行`, invoke `qianliu-ipd` with the identical arguments, `mode: apply`, and `expectedPlanHash` from the preview.
+Only after `确认执行`, execute the identical provider command with `--mode apply` and `--expected-plan-hash <confirmed-plan-hash>`. Never call apply through an inferred action or a previous plan hash.
 
 The provider applies Epic → Feature → Story → Tech → TR1 review → TR1 AI context. On failure, report the completed count, failed operation, and remaining work. A rerun must start with a fresh preview and skip unchanged checkpoints.
 
@@ -122,3 +159,4 @@ The provider applies Epic → Feature → Story → Tech → TR1 review → TR1 
 ## Resource
 
 - Execute `scripts/sync-to-ipd.mjs` for deterministic artifact discovery, validation, hashing, and manifest generation.
+- Execute `scripts/ipd-provider.cjs` for deterministic target discovery, preview, and apply through the bundled `qianliu-ipd` implementation. No IPD MCP tool is required.

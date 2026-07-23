@@ -6,6 +6,7 @@ Product-planning workflow integration and delivery hardening.
 
 ## Completed
 
+- 2026-07-23: Made `sync-to-ipd` executable without an IPD MCP tool or nested Skill invocation. The new allowlisted provider resolves the co-located `qianliu-ipd` implementation inside cospec and exposes deterministic target discovery, preview, and confirmed apply commands; released as cospec `1.0.18`.
 - 2026-07-21: Unified the custom Codex display names for `generate-demo` and `sync-to-ipd` with the rest of the plugin by adding the `Cospec:` prefix, and released the metadata change as cospec `1.0.10`.
 - 2026-07-21: Integrated the latest remote `master` changes into the `sync-to-ipd` release branch, set the cospec release version to `1.0.9`, and restored Product KB and `qianliu-ipd` to their existing `0.1.0` and `1.18.0` versions.
 - 2026-07-21: Added the `sync-to-ipd` Skill and the `qianliu-ipd` `syncManifest` provider action for preview-first, explicitly confirmed synchronization of complete cospec TR1/TR2 artifact sets. The implementation includes stable artifact metadata, explicit conflict binding, plan-drift protection, parent-first writes, resumable checkpoints, TR1 deliverable/root-Epic routing, and no automatic retries.
@@ -25,10 +26,11 @@ To be confirmed.
 
 ## Blockers
 
-None.
+- 2026-07-23: The installed-runtime IPD read-only smoke request is currently blocked by `ECONNRESET`. The GitLab source and previously installed `ipd_api.js` are byte-identical and both fail at the same direct network boundary, so this is tracked as current IPD reachability rather than a provider regression.
 
 ## Recent Validation
 
+- 2026-07-23: A RED installed-runtime test failed because `sync-to-ipd` had no executable IPD adapter when MCP actions were absent. The GREEN provider suite passed 7/7 tests, the combined sync/provider/manifest suite passed 25/25 tests, and the complete cospec regression suite passed 89/89 tests; apply without the confirmed plan hash remained blocked and raw IPD error responses remained hidden.
 - 2026-07-21: A RED metadata assertion confirmed both custom Skill labels omitted the plugin prefix. After the change, both labels matched `Cospec: ...`, YAML parsing and plugin version checks passed at `1.0.10`, and the combined cospec regression suite passed.
 - 2026-07-21: After merging the latest remote `master`, cospec version auditing passed at `1.0.9`; the combined cospec suite passed 22/22 tests and the Product KB suite passed 50/50 tests with Product KB and `qianliu-ipd` versions unchanged.
 - 2026-07-21: The live `sync-to-ipd` plan completed all expected requirement creates and both TR1 uploads. A subsequent read-only preview returned no creates, updates, uploads, or conflicts, confirming checkpointed idempotency without a retry.
