@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "You MUST use this before any product planning work - clarifying requirements, designing user journeys, or writing TR1 spec documents. Asks the user which workflow they need, then dispatches to the chosen workflow entry skill."
+description: "Use only when the user explicitly asks to run cospec for product-planning work, or explicitly continues an active cospec workflow. Do not use merely because the request mentions cospec, cospowers, requirements, planning, research, TR1, or TR2. Do not use when discussing, reviewing, debugging, documenting, or improving cospec itself."
 ---
 
 # Brainstorming —— 中央路由器

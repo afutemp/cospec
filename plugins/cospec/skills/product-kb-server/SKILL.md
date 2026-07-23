@@ -1,6 +1,6 @@
 ---
 name: product-kb-server
-description: 管理 kb-server 知识库：列出、下载文档、上传附件。使用此 skill 当用户提到知识库、kb-server、下载文档、上传文件到知识库、同步知识库内容、拉取产品文档、获取知识库列表、manage knowledge base、download kb、upload documents 等操作时。即使用户没有明确说"知识库管理"，只要涉及从 kb-server 获取或更新文档内容，都应该触发此 skill。
+description: 管理 kb-server 知识库：列出、下载文档、上传附件。仅在用户明确要求管理知识库（如列出／下载／上传／同步 kb-server 内容）时才使用。不要仅因任务涉及文档内容而自动触发。
 ---
 
 ## product-kb-server

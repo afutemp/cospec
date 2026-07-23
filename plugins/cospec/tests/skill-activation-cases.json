@@ -1,0 +1,24 @@
+{
+  "_doc": "Skill 激活路由回归用例。源自 skill-trigger-false-positive-analysis.md 第 10 节。cases 本身是数据；模型实际路由行为需在隔离会话中复测（见 skill-activation-routing.test.mjs 的回归清单）。静态守卫由该 runner 断言。",
+  "positives": [
+    { "id": "P1", "input": "请使用 cospec 澄清这个需求。", "expect": "brainstorming", "note": "显式要求使用 cospec" },
+    { "id": "P2", "input": "按 cospec 大需求流程继续。", "expect": "large-requirement-workflow", "note": "继续已启动流程" },
+    { "id": "P3", "input": "调用 product-kb-query 查询产品知识库中的认证方式。", "expect": "product-kb-query", "note": "显式指定 skill + 知识库问题" },
+    { "id": "P4", "input": "已确认启动 cospec 后说：继续下一步。", "expect": "current-workflow", "note": "继续活动流程" }
+  ],
+  "hardNegatives": [
+    { "id": "N1", "input": "总结日志中关于 cospec 或 cospowers 的规划事项。", "expect": "none", "note": "cospec 是材料筛选条件，不是执行工具（案例一）" },
+    { "id": "N2", "input": "给 cospec Skill 套件设计一个基于使用过程和产出效果持续改进的自进化机制。", "expect": "none", "note": "cospec 是被讨论对象（案例二）" },
+    { "id": "N3", "input": "分析 cospec 为什么会误触。", "expect": "none", "note": "普通问题分析" },
+    { "id": "N4", "input": "修复 cospec 插件的 SessionStart Hook。", "expect": "none", "note": "工程修改任务" },
+    { "id": "N5", "input": "比较 cospec 和 cospowers 的架构。", "expect": "none", "note": "普通架构比较" },
+    { "id": "N6", "input": "这个文档提到了 TR1，帮我润色。", "expect": "none", "note": "普通文档编辑" },
+    { "id": "N7", "input": "不要使用 cospec。", "expect": "none-suppress", "note": "用户否定，当前任务内抑制后续触发" },
+    { "id": "N8", "input": "帮我设计这个 API。", "expect": "none", "note": "普通工程设计，不因“设计”触发竞品研究" }
+  ],
+  "ambiguous": [
+    { "id": "A1", "input": "帮我梳理这个需求。", "expect": "strict:none / smart:check", "note": "严格模式不自动启动；智能模式需双信号" },
+    { "id": "A2", "input": "帮我做用户旅程。", "expect": "strict:none / smart:check", "note": "无显式 cospec 意图" },
+    { "id": "A3", "input": "生成 TR1。", "expect": "strict:none / smart:check", "note": "有 cospec 产物但无显式执行意图" }
+  ]
+}

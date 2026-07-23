@@ -97,7 +97,7 @@ Skill 会先执行不联网的 dry-run，并在真正发送前再次确认目标
 
 | Skill | 职责 |
 |-------|------|
-| `using-spec-developer` | 入口点：指导如何使用 skill |
+| `using-spec-developer` | 开发者文档（`docs/using-spec-developer/`），不再是运行时 skill，不自动注入会话 |
 | `brainstorming` | 中央路由器：评估规划阶段，选择 workflow entry skill |
 | `large-requirement-workflow` | 大需求工作流编排器：串行调用 12 个规划 leaf skill，在 TR1 完成后、TR2 开始前可选生成 Demo |
 | `small-requirement-workflow` | 小需求工作流编排器：串行调用 3 个规划 leaf skill，完成后可选生成 Demo |

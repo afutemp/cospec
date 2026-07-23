@@ -33,7 +33,7 @@ brainstorming
 
 - **Workflow Entry Skill**：编排一组 leaf skills 的入口 skill，例如 `large-requirement-workflow`、`small-requirement-workflow`。它在主会话中直接串行调用各 leaf skill。
 - **Leaf Skill**：实际执行业务步骤的 skill，例如 `product-planning-requirement-clarification`、`user-journey-design`、`tr1-requirements-spec`。
-- **元 Skill**：`using-spec-developer`、`cospec-configure`、`writing-skills` 不参与主链业务。
+- **元 Skill**：`cospec-configure`、`writing-skills` 不参与主链业务。（`using-spec-developer` 已移出 `skills/`，转为 `docs/using-spec-developer/` 开发者文档，不再通过 SessionStart 自动注入。）
 
 ---
 
@@ -372,7 +372,7 @@ skills/product-planning-with-competitor-workflow/
 1. 同样新建 `skills/<skill-name>/SKILL.md`。
 2. **不要接入 `brainstorming`**，避免污染主链。
 3. 用户通过直接调用 skill 名称使用，例如 `/skill code-review`。
-4. 如果需要在会话启动时自动引导，参考 `using-spec-developer` 的模式。
+4. 不再推荐会话启动时注入完整 skill 引导（曾用 `using-spec-developer` 全文注入，已移除以避免扩大 skill 触发范围）。如确需引导，只注入范围明确的中性提示，参考 `hooks/session-start`。
 
 `generate-demo` 属于独立能力，但也可由大／小需求工作流在明确节点调用。它不接入 `brainstorming` 路由：大需求 workflow entry skill 在 TR1 文档完成后、TR2 开始前单独询问用户是否生成 Demo；小需求仍在全部规划节点完成后询问。只有用户同意后，才能把本次运行记录的准确产物路径传给 `generate-demo`。
 

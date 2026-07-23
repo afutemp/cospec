@@ -19,21 +19,11 @@ printf '%s session-start called from %s\n' "$(date -Iseconds 2>/dev/null || date
 #   bash "${PLUGIN_ROOT}/scripts/setup-deps.sh" 2>/dev/null || true
 # fi
 
-# Read using-spec-developer content and embed it directly
-using_content=$(cat "${PLUGIN_ROOT}/skills/using-spec-developer/SKILL.md" 2>&1 || echo "Error reading using-spec-developer skill")
-
-escape_for_json() {
-    local s="$1"
-    s="${s//\\/\\\\}"
-    s="${s//\"/\\\"}"
-    s="${s//$'\n'/\\n}"
-    s="${s//$'\r'/\\r}"
-    s="${s//$'\t'/\\t}"
-    printf '%s' "$s"
-}
-
-escaped=$(escape_for_json "$using_content")
-session_context="<EXTREMELY_IMPORTANT>\nYou have cospec.\n\n**Below is the full content of your 'cospec:using-spec-developer' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\n\n${escaped}\n\n</EXTREMELY_IMPORTANT>"
+# cospec activation hint (bounded). The full skill-discipline guide that used
+# to be injected here (using-spec-developer) has been moved to
+# docs/using-spec-developer/ and is no longer force-injected into every session,
+# because it over-broadened skill triggering (see skill-trigger-false-positive-analysis.md).
+session_context="<system-reminder>\ncospec 已安装。仅当用户明确要求“使用 cospec”或继续已启动的 cospec 工作流时，才调用 brainstorming 入口。\n仅提及、讨论、分析、修复或优化 cospec 本身，或总结／筛选包含 cospec 关键词的文件，均不触发 cospec 工作流。\n用户明确表示“不要使用 cospec”时，当前任务内禁止任何 cospec Skill。\n</system-reminder>"
 
 memory_hint=""
 if [ -d "memory" ]; then

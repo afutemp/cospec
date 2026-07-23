@@ -19,7 +19,7 @@ Before you make changes to this repo, you MUST:
 
 | Skill | Trigger |
 |-------|---------|
-| `using-spec-developer` | Session start — teaches how to use skills |
+| `using-spec-developer` | Moved to `docs/` (developer reference); no longer a runtime skill or auto-injected |
 | `brainstorming` | ALL product planning work — asks user which workflow, then dispatches |
 | `large-requirement-workflow` | Dispatched by `brainstorming` for the full large-requirement pipeline; offers the optional Demo handoff after TR1 and before TR2 |
 | `small-requirement-workflow` | Dispatched by `brainstorming` for small requirements (clarify + journey + TR1), followed by an optional Demo handoff |
@@ -62,7 +62,7 @@ brainstorming（路由器：询问用户选择 → 确认 → 分发）
 
 | Skill | 角色 |
 |-------|------|
-| `using-spec-developer` | 入口引导：如何使用 skill |
+| `using-spec-developer` | 已移至 `docs/`（开发者参考），不再是运行时 skill、不自动注入 |
 | `brainstorming` | 中央路由器：询问用户选择 workflow，确认后分发 |
 | `large-requirement-workflow` | 大需求工作流编排器：TR1 完成后可选生成 Demo，再继续 TR2 |
 | `small-requirement-workflow` | 小需求工作流编排器：串行调用 3 个规划 leaf skill，完成后可选生成 Demo |

@@ -106,7 +106,7 @@ Codex has native skill discovery — it scans `~/.agents/skills/` at startup, pa
 
 When installed via marketplace, Codex copies the plugin into its plugin cache and loads `skills/` from the plugin manifest (`skills: "./skills/"`).
 
-The `using-spec-developer` skill is discovered automatically and enforces skill usage discipline — no additional configuration needed.
+The `using-spec-developer` guide has been moved to `docs/using-spec-developer/` and is no longer auto-discovered or injected; cospec no longer force-loads skill-discipline rules into every session.
 
 ## Environment Variables
 
