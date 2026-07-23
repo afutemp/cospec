@@ -29,7 +29,7 @@
 | 4 | **TR1 需求说明书** | `tr1-requirements-spec` | TR1 用户需求说明书（大需求评审版 + AI 上下文版 / 小需求评审版） |
 | TR1 后可选 | **Demo 生成** | `generate-demo` | 大需求在进入 TR2 前询问；小需求在规划完成后询问。用户确认文档和 dry-run 后返回 Frieren Demo handoff 链接 |
 | 5 | **TR2 产物**（仅大需求） | `tr2-epic-creator` / `tr2-feature-creator` / `tr2-story-creator` / `tr2-tech-creator` | EPIC / Feature / Story / Tech 需求文档（可追溯至 TR1 AI 上下文版） |
-| 独立 | **IPD 同步** | `sync-to-ipd` | 预览并确认后同步大需求 TR1/TR2，依赖 product-kb 的 `qianliu-ipd` |
+| 独立 | **IPD 同步** | `sync-to-ipd` | 预览并确认后同步大需求 TR1/TR2，依赖 `qianliu-ipd` |
 
 ## 安装
 
@@ -89,7 +89,7 @@ Skill 会先执行不联网的 dry-run，并在真正发送前再次确认目标
 
 ### IPD 同步依赖
 
-`sync-to-ipd` 依赖 product-kb 插件中的 `qianliu-ipd`。IPD Token 由 `qianliu-ipd` 从 `~/.qianliu/config.json`、`QIANLIU_CONFIG_PATH` 或 `IPD_TOKEN` 读取；不要写入 cospec 配置或对话。
+`sync-to-ipd` 依赖 `qianliu-ipd`。IPD Token 由 `qianliu-ipd` 从 `~/.qianliu/config.json`、`QIANLIU_CONFIG_PATH` 或 `IPD_TOKEN` 读取；不要写入 cospec 配置或对话。
 
 调用 `/sync-to-ipd [大需求产物目录]` 或 `$sync-to-ipd [大需求产物目录]` 后，Skill 会选择已有产品、项目、版本、团队和 TR1 交付物，生成 `.ipd-sync/preview.md`，并仅在用户针对当前计划回复“确认执行”后写入。
 

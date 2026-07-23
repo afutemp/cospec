@@ -16,7 +16,7 @@ Preview and safely synchronize one complete cospec large-requirement artifact se
 ## Hard Gates
 
 - Support only a complete large-requirement set containing both TR1 documents and TR2 Epic, Feature, Story, and Tech documents.
-- Require `qianliu-ipd`. If it is unavailable, stop and identify the product-kb plugin installation command for the current platform. Do not install it automatically.
+- Require `qianliu-ipd`. If it is unavailable, stop and tell the user to reinstall/update the cospec plugin. Do not install anything automatically.
 - Read credentials only through `qianliu-ipd`. Never request, print, persist, or place a Token in a command.
 - Never create an IPD product, project, version, or deliverable. Never delete an IPD issue.
 - Never write to IPD during discovery or preview.

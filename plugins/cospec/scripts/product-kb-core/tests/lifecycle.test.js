@@ -9,8 +9,8 @@ const root = path.resolve(__dirname, '..', '..', '..');
 
 function read(relative) { return fs.readFileSync(path.join(root, relative), 'utf8'); }
 
-test('all six user skills have frontmatter and core is not triggerable', () => {
-  const skills = ['product-kb','product-kb-init','product-kb-update','product-kb-eval','product-kb-optimize','product-kb-query'];
+test('all five lifecycle skills have frontmatter and core is not triggerable', () => {
+  const skills = ['product-kb','product-kb-init','product-kb-update','product-kb-eval','product-kb-optimize'];
   for (const skill of skills) {
     const content = read(`skills/${skill}/SKILL.md`);
     assert.match(content, /^---\nname: /);
