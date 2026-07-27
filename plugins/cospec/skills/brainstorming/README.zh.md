@@ -32,5 +32,6 @@ brainstorming 只做路由；路由决定权完全交由用户判断。各工作
 
 1. **询问用户** — 给出两个选项（大需求 / 小需求）和简短说明，并以提问收尾
 2. **等待用户选择** — 输出提问后立即停止本轮输出；无论需求倾向多明显，都禁止自行二选一
-3. **分发** — 调用选中的 workflow entry skill
-4. **结束** — 被调用的 workflow skill 接手后续流程
+3. **体检** — 调用 `cospec-preflight` 探活 KB / IPD / Demo 连通性，警告但不阻塞
+4. **分发** — 调用选中的 workflow entry skill
+5. **结束** — 被调用的 workflow skill 接手后续流程
