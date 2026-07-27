@@ -14,12 +14,24 @@ brainstorming 是所有产品规划工作的唯一入口，承担单一职责：
 - **路由器**：对所有产品规划任务，询问用户需要哪种 workflow，确认后分发到对应的 workflow entry skill。
 
 <HARD-GATE>
-在向用户确认路由并调用 workflow entry skill 之前，禁止调用任何下游叶子 skill 或产出任何正式文档。适用于所有产品规划任务，无论看起来多简单。
+在用户明确选择 workflow 之前，禁止执行以下任一动作：
+
+- 调用任何 workflow entry skill（`large-requirement-workflow` / `small-requirement-workflow`）；
+- 调用任何下游叶子 skill；
+- 产出任何正式文档；
+- 自行判断需求大小、替用户做出二选一决定。
+
+适用于所有产品规划任务，无论看起来多简单、需求倾向多明显。
 </HARD-GATE>
 
-## 反模式：跳过路由直接产出
+## 反模式：跳过路由 / 自行选择 workflow
 
-每个产品规划任务都要经过路由流程。需求澄清、用户旅程设计、TR1 文档生成——无一例外。禁止跳过路由直接进入下游 workflow。
+每个产品规划任务都要经过路由流程。以下均属违规：
+
+- **自行选择**：根据需求描述自行判断大小，不询问用户就直接调用 `large-requirement-workflow` / `small-requirement-workflow`；
+- **直接产出**：跳过路由直接进入需求澄清、用户旅程设计、TR1 文档生成等下游环节。
+
+无一例外。
 
 ---
 
@@ -32,7 +44,14 @@ brainstorming 是所有产品规划工作的唯一入口，承担单一职责：
    | `large-requirement-workflow` | 大需求：需要共创/客户反馈/竞品研究，或要 TR2 产物（EPIC/Feature/Story/Tech） | TR1 + TR2（完整管线） |
    | `small-requirement-workflow` | 小需求：范围聚焦、无需研究/竞品、到 TR1 即止 | TR1（精简管线） |
 
-2. **等待用户选择**，不做过多判断。路由决定权完全交由用户。
+   可直接套用以下话术（按需微调，但必须以提问收尾）：
+
+   > 当前需求您希望走哪条工作流？
+   > - **大需求**（large-requirement-workflow）：需要共创/客户/竞品研究，或要 TR2 产物 → TR1 + TR2
+   > - **小需求**（small-requirement-workflow）：范围聚焦、无需研究，到 TR1 即止 → TR1
+   > 请选择：大需求 还是 小需求？
+
+2. **输出提问后立即停止本轮输出，等待用户回复。** 无论需求看起来多明确、倾向多明显，都禁止自行二选一。路由决定权完全交由用户。
 
 3. **用户确认后**，调用选中的 workflow entry skill（`Skill("<skill-name>")`）。
 

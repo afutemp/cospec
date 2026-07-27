@@ -10,7 +10,12 @@
 
 ### 硬门禁（HARD-GATE）
 
-向用户确认路由并调用 workflow entry skill 之前，**禁止调用任何下游 skill 或产出正式文档**。
+在用户明确选择 workflow 之前，**禁止**：
+
+- 调用任何 workflow entry skill（`large-requirement-workflow` / `small-requirement-workflow`）；
+- 调用任何下游 skill；
+- 产出任何正式文档；
+- 自行判断需求大小、替用户二选一。
 
 ### 两条工作流
 
@@ -25,7 +30,7 @@ brainstorming 只做路由；路由决定权完全交由用户判断。各工作
 
 ## 路由流程
 
-1. **询问用户** — 给出两个选项（大需求 / 小需求）和简短说明
-2. **等待用户选择** — 不做过多判断
+1. **询问用户** — 给出两个选项（大需求 / 小需求）和简短说明，并以提问收尾
+2. **等待用户选择** — 输出提问后立即停止本轮输出；无论需求倾向多明显，都禁止自行二选一
 3. **分发** — 调用选中的 workflow entry skill
 4. **结束** — 被调用的 workflow skill 接手后续流程
