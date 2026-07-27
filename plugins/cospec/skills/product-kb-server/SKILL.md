@@ -142,10 +142,10 @@ TOKEN=$(curl -s -X POST $KB_SERVER_URL/api/auth/login \
 
 ```bash
 # 方式一：命令行参数
-./skills/product-kb-server/scripts/product-kb-server.cjs list --server http://10.6.100.230
+./skills/product-kb-server/scripts/product-kb-server.cjs list --server http://product-kb.sangfor.com
 
 # 方式二：环境变量
-export KB_SERVER_URL=http://10.6.100.230
+export KB_SERVER_URL=http://product-kb.sangfor.com
 export KB_AUTH_TOKEN=kb_key_xxxxxxxxxxxxxxxx
 ./skills/product-kb-server/scripts/product-kb-server.cjs download --kb <kb-name-or-id>
 ./skills/product-kb-server/scripts/product-kb-server.cjs download --kb <kb-name-or-id> --output ./docs
@@ -155,5 +155,5 @@ export KB_AUTH_TOKEN=kb_key_xxxxxxxxxxxxxxxx
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `KB_SERVER_URL` | kb-server 地址 | `http://10.6.100.230` |
+| `KB_SERVER_URL` | kb-server 地址 | `http://product-kb.sangfor.com` |
 | `KB_AUTH_TOKEN` | API KEY 或登录 Token | (空) |

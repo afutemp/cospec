@@ -15,7 +15,7 @@ description: "Use only before starting a cospec workflow to verify that external
 
 | 依赖 | 探测地址 | 地址来源 |
 |---|---|---|
-| 知识库 | `GET ${KB_SERVER_URL}/`（默认 `http://10.6.100.230/`） | env `KB_SERVER_URL`，同 `product-kb-server` |
+| 知识库 | `GET ${KB_SERVER_URL}/`（默认 `http://product-kb.sangfor.com/`） | env `KB_SERVER_URL`，同 `product-kb-server` |
 | IPD | `GET http://ipd.sangfor.com/` | 硬编码，同 `ipd_api.js` |
 | Demo | `GET ${FRIEREN_DEMO_BASE_URL}/`（默认 `http://ui.sangfor.com.cn/`） | env `FRIEREN_DEMO_BASE_URL`，同 `generate-demo` |
 

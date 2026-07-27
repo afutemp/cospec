@@ -20,7 +20,7 @@ import { pathToFileURL } from 'node:url';
 // KB:    product-kb-server.cjs KB_SERVER_URL default (env-overridable).
 // IPD:   ipd_api.js hardcoded base (NOT configurable).
 // Demo:  generate-demo.mjs DEFAULT_FRIEREN_DEMO_BASE_URL (env-overridable).
-const DEFAULT_KB_URL = 'http://10.6.100.230';
+const DEFAULT_KB_URL = 'http://product-kb.sangfor.com';
 const IPD_URL = 'http://ipd.sangfor.com';
 const DEFAULT_DEMO_URL = 'http://ui.sangfor.com.cn/';
 

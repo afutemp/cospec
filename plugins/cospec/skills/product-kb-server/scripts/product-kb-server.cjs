@@ -7,7 +7,7 @@ const path = require('node:path');
 const os = require('node:os');
 const zlib = require('node:zlib');
 
-const KB_SERVER_URL = (process.env.KB_SERVER_URL ?? 'http://10.6.100.230').replace(/\/$/, '');
+const KB_SERVER_URL = (process.env.KB_SERVER_URL ?? 'http://product-kb.sangfor.com').replace(/\/$/, '');
 const AUTH_TOKEN = process.env.KB_AUTH_TOKEN ?? '';
 
 const USAGE = `Usage: product-kb-server <command> [options]
