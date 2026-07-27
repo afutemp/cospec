@@ -2,7 +2,7 @@
 
 `sync-to-ipd` 将 cospec 大需求流程生成的 TR1 评审版、TR1 AI 上下文版和 Epic／Feature／Story／Tech 文档安全同步到现有 IPD 项目。
 
-使用前需要配置 `qianliu-ipd`。Token 只通过 `~/.qianliu/config.json`、`QIANLIU_CONFIG_PATH` 或 `IPD_TOKEN` 提供，不要写入 cospec 配置或对话。
+IPD 执行能力已随 cospec 内置。`sync-to-ipd` 通过本目录的确定性 provider 调用同一插件内的 `qianliu-ipd` 脚本，不依赖 MCP 工具或嵌套 Skill 调用。Token 只通过 `~/.qianliu/config.json`、`QIANLIU_CONFIG_PATH` 或 `IPD_TOKEN` 提供，不要写入 cospec 配置、命令或对话。
 
 调用示例：
 
