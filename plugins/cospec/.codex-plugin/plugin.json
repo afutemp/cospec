@@ -1,6 +1,6 @@
 {
   "name": "cospec",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "AI 原生产品规划工作流：TR1/TR2 文档生成及 Frieren Demo 生成",
   "author": {
     "name": "afutemp"
@@ -31,12 +31,6 @@
       "Read",
       "Write"
     ],
-    "websiteURL": "https://github.com/afutemp/cospec",
-    "defaultPrompt": [
-      "使用 cospec 澄清这个需求",
-      "使用 cospec 设计用户旅程",
-      "使用 cospec 生成 TR1 需求说明书",
-      "使用 generate-demo 从已确认的需求文档生成 Demo"
-    ]
+    "websiteURL": "https://github.com/afutemp/cospec"
   }
 }
