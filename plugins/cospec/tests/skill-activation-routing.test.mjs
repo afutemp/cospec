@@ -93,11 +93,66 @@ for (const s of ['competitor-feature-research', 'competitor-pain-points', 'compe
   });
 }
 
+// ---- 守卫 5：scaffold-custom-workflow 仅在显式创建请求时激活 ----
+test('scaffold-custom-workflow 仅在用户显式要求创建自定义工作流时激活', async () => {
+  const d = await frontmatterDesc('scaffold-custom-workflow');
+  assert.match(d, /explicitly|显式/i, 'description 应强调显式触发');
+  assert.match(d, /do not use|不要|禁止/i, 'description 应有反向守卫词');
+  // Must NOT mention generic phrases like "create workflow" without a cospec scope.
+  assert.match(
+    d,
+    /custom workflow|自定义工作流/,
+    'description 应明确"自定义工作流"语义，避免与普通 skill 创作混淆',
+  );
+});
+
+// ---- 守卫 6：cospec-configure 必须能因"删除自定义工作流"而激活 ----
+test('cospec-configure description mentions delete so agent can trigger on "delete workflow" intent', async () => {
+  const d = await frontmatterDesc('cospec-configure');
+  assert.match(
+    d,
+    /delete/i,
+    'description must include "delete" so the agent routes delete-workflow requests here',
+  );
+  // Must keep the reverse-guard against over-trigger on "cospec" alone.
+  assert.match(
+    d,
+    /Do not use merely/i,
+    'description must keep the reverse-guard against trivial "cospec" mentions',
+  );
+});
+
+// ---- 守卫 7：竞品研究 skill 优先 headless 浏览器 + 降级链 ----
+
+const COMPETITOR_SKILLS = [
+  'competitor-feature-research',
+  'competitor-pain-points',
+  'competitor-problem-solving',
+];
+
+for (const name of COMPETITOR_SKILLS) {
+  test(`${name} description prefers headless browser and indicates fallback exists`, async () => {
+    const d = await frontmatterDesc(name);
+    assert.match(
+      d,
+      /headless/i,
+      `${name}: must mention headless mode (no popup windows)`,
+    );
+    // Must indicate a fallback exists (without naming specific tools,
+      // which we don't know the agent has).
+    assert.match(
+      d,
+      /降级|fallback|不可用|降级链/,
+      `${name}: must indicate a fallback path when headless browser is unavailable`,
+    );
+  });
+}
+
 // ---- 守卫 4：用例集合存在，并打印需隔离会话复测的回归清单 ----
 test('路由用例集合完整 + 打印回归清单（需隔离会话手动复测）', async () => {
   const cases = JSON.parse(await readFile(casesPath, 'utf8'));
-  assert.ok(cases.positives?.length >= 4, '正例应 >=4');
-  assert.ok(cases.hardNegatives?.length >= 8, '硬负例应 >=8');
+  assert.ok(cases.positives?.length >= 6, '正例应 >=6（含 P5 自定义工作流创建 + P6 删除）');
+  assert.ok(cases.hardNegatives?.length >= 9, '硬负例应 >=9（含 N9 讨论自定义工作流架构）');
   assert.ok(cases.ambiguous?.length >= 3, '模糊例应 >=3');
 
   const fmt = (tag, c) => `[${tag}] expect=${c.expect.padEnd(22)} | ${c.input}`;

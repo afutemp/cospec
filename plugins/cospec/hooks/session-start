@@ -25,6 +25,36 @@ printf '%s session-start called from %s\n' "$(date -Iseconds 2>/dev/null || date
 # because it over-broadened skill triggering (see skill-trigger-false-positive-analysis.md).
 session_context="<system-reminder>\ncospec 已安装。仅当用户明确要求“使用 cospec”或继续已启动的 cospec 工作流时，才调用 brainstorming 入口。\n仅提及、讨论、分析、修复或优化 cospec 本身，或总结／筛选包含 cospec 关键词的文件，均不触发 cospec 工作流。\n用户明确表示“不要使用 cospec”时，当前任务内禁止任何 cospec Skill。\n</system-reminder>"
 
+# Detect custom-workflow drift: vault workflows that have lost their
+# registry entry or agent bridge (typical after plugin upgrade).
+# Best-effort: never blocks session start, never errors out.
+#
+# Caveat: agent may or may not surface the embedded <system-reminder>.
+# Brainstorming (Step 1.5) and cospec-configure (Step 1) ALSO run drift
+# detection at user-interaction time, so the user always sees drift when
+# invoking cospec — regardless of whether this hook's output reaches
+# the agent intact. This hook is the first line of defense.
+#
+# Why temp file + read instead of $(...): bash's command substitution
+# strips backslash-quote escapes, which the helper relies on for safe
+# JSON embedding. read preserves bytes verbatim.
+#
+# The helper emits the complete <system-reminder priority="high">
+# block with JSON-escaped quotes already in place. We just embed it.
+drift_hint=""
+if command -v node >/dev/null 2>&1; then
+  drift_tmp=$(mktemp 2>/dev/null || echo "/tmp/.cospec-drift-$$")
+  node "${SCRIPT_DIR}/lib/check-vault-drift.mjs" "${PLUGIN_ROOT}" > "${drift_tmp}" 2>/dev/null || true
+  if [ -s "${drift_tmp}" ]; then
+    # `|| true` swallows read's exit-1-on-EOF so `set -e` doesn't abort.
+    IFS= read -r drift_hint < "${drift_tmp}" || true
+  fi
+  rm -f "${drift_tmp}" 2>/dev/null || true
+fi
+if [ -n "${drift_hint}" ]; then
+  session_context="${session_context}\n${drift_hint}"
+fi
+
 memory_hint=""
 if [ -d "memory" ]; then
   recent_mem=$(ls -t memory/*.md 2>/dev/null | head -2 | while read -r f; do

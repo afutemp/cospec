@@ -1,21 +1,24 @@
 # cospec Plugin
 
-适用于 Claude Code 及兼容 AI Agent 的 AI 原生产品规划工作流插件。以 `brainstorming` 为产品规划入口，按需求规模路由到**大需求**或**小需求**两条工作流，串联需求澄清、共创/客户/竞品研究、用户旅程设计、TR1 需求说明书；大需求在 TR1 完成后可选调用 `generate-demo`，再进一步产出 TR2（EPIC/Feature/Story/Tech）。小需求在规划完成后可选调用 `generate-demo`。也可以独立使用 `sync-to-ipd` 将确认过的 TR1/TR2 预览并同步到 IPD。
+适用于 Claude Code 及兼容 AI Agent 的 AI 原生产品规划工作流插件。以 `brainstorming` 为产品规划入口，从 `cospec.config.json` 的 `workflow.options` 读取可用工作流入口 skill，按 frontmatter `description` 生成动态菜单，路由到内置的 **大需求**/**小需求** 工作流或用户通过 `scaffold-custom-workflow` 注册的自定义工作流。所有工作流串联需求澄清、共创/客户/竞品研究、用户旅程设计、TR1 需求说明书；大需求在 TR1 完成后可选调用 `generate-demo`，再进一步产出 TR2（EPIC/Feature/Story/Tech）。小需求在规划完成后可选调用 `generate-demo`。也可以独立使用 `sync-to-ipd` 将确认过的 TR1/TR2 预览并同步到 IPD。
 
 ## 工作流路由
 
-`brainstorming` 按需求规模路由到 workflow entry skill，后者在主会话中串行调用各 leaf skill：
+`brainstorming` 从 `cospec.config.json` 读取 `workflow.options`，对每个条目读 SKILL.md frontmatter `description` 生成动态菜单，按用户选择路由到 workflow entry skill，后者在主会话中串行调用各 leaf skill：
 
 ```
-用户意图 ──→ brainstorming ──┬─→ 大需求：澄清／研究／旅程／TR1 ──→ 可选 generate-demo ──→ TR2
-                              └─→ 小需求：澄清／旅程／TR1 ──→ 可选 generate-demo
+用户意图 ──→ brainstorming（读 workflow.options → 询问 → preflight → 二次确认 → 分发）
+                 │
+                 ├─→ large-requirement-workflow  （内置默认）
+                 ├─→ small-requirement-workflow  （内置默认）
+                 └─→ <custom>-workflow           （vault + bridge，用户自定义）
 ```
 
 | 用户状态 | 路由 | 说明 |
 |---------|------|------|
 | 大需求：需要共创/客户/竞品研究，或要 TR2 产物；范围大、"想全面" | → `large-requirement-workflow` | 澄清 → 研究（5 串行）→ 旅程 → TR1 → TR2 |
 | 小需求：范围聚焦、无需研究/竞品、到 TR1 即止 | → `small-requirement-workflow` | 澄清 → 旅程 → TR1 |
-| 无法判断 | → `large-requirement-workflow` | 默认大需求管线 |
+| 自定义工作流（团队或个人新增） | → `<custom>-workflow` | 通过 `scaffold-custom-workflow` 创建；vault + symlink bridge |
 
 ## 流水线阶段明细
 
@@ -67,6 +70,40 @@
 
 所有配置项均为**可选**。推荐使用 `cospec-configure` skill 进行交互式配置，它会将结果写入插件根目录的 `cospec.config.json`。
 
+### `workflow` —— 工作流入口注册表
+
+`brainstorming` 从 `workflow.options` 读取可用工作流入口；每个条目读其 SKILL.md frontmatter `description` 作为菜单解释。
+
+```json
+{
+  "workflow": {
+    "default": "large-requirement-workflow",
+    "options": [
+      "large-requirement-workflow",
+      "small-requirement-workflow",
+      "quick-tr1-workflow"
+    ],
+    "install-dirs": {
+      "codex": "~/.agents/skills",
+      "claude-code": "~/.claude/skills"
+    }
+  }
+}
+```
+
+- `default` 必须始终是 `options` 的成员；它仅作 brainstorming 自身判断失败时的回退提示，**不**授权自动派发。
+- `options` 是**扁平字符串数组**，只存 skill 名；解释来自 SKILL.md frontmatter。
+- `install-dirs` 是可选的 agent-id → 路径 覆盖映射；不指定时由运行中的 agent 自决（Codex 用 `~/.agents/skills/`，Claude Code 用 `~/.claude/skills/`）。
+
+新增自定义工作流的标准流程：
+
+```bash
+# 在 Codex / Claude Code 中调用
+Skill("scaffold-custom-workflow")
+```
+
+它会引导你完成 TDD（先失败测试 → 再 SKILL.md）、bridge 安装（symlink 或 Windows junction）、注册到 `workflow.options`。也可以通过 `cospec-configure` 的 "workflows" 分类手动管理 vault → bridge → registry 链路。
+
 ### `project.product`
 
 **用途**：产品标识符。
@@ -98,9 +135,11 @@ Skill 会先执行不联网的 dry-run，并在真正发送前再次确认目标
 | Skill | 职责 |
 |-------|------|
 | `using-spec-developer` | 开发者文档（`docs/using-spec-developer/`），不再是运行时 skill，不自动注入会话 |
-| `brainstorming` | 中央路由器：评估规划阶段，选择 workflow entry skill |
-| `large-requirement-workflow` | 大需求工作流编排器：串行调用 12 个规划 leaf skill，在 TR1 完成后、TR2 开始前可选生成 Demo |
-| `small-requirement-workflow` | 小需求工作流编排器：串行调用 3 个规划 leaf skill，完成后可选生成 Demo |
+| `brainstorming` | 中央路由器：从 `workflow.options` 读可用工作流入口，按 frontmatter `description` 生成动态菜单，询问用户后分发 |
+| `large-requirement-workflow` | 内置默认工作流入口（大需求）：串行调用 12 个规划 leaf skill，在 TR1 完成后、TR2 开始前可选生成 Demo |
+| `small-requirement-workflow` | 内置默认工作流入口（小需求）：串行调用 3 个规划 leaf skill，完成后可选生成 Demo |
+| `<custom>-workflow` | 用户自定义工作流入口（vault `~/.cospec/workflows/<name>-workflow/` + symlink bridge，由 `scaffold-custom-workflow` 生成） |
+| `scaffold-custom-workflow` | 元 skill：composer 模式——从内置 13 个 leaf skill 多选组合，自动渲染 SKILL.md（用户不写 markdown），再 bridge 安装与 registry |
 | `generate-demo` | 将用户确认的 cospec Markdown 产物签名提交到 Frieren Demo，并返回 handoff 链接；大需求在 TR1 后调用，小需求在工作流完成后调用 |
 | `sync-to-ipd` | 将大需求 TR1/TR2 生成稳定 manifest，通过内置 provider 完成目标查询、差异预览和计划哈希确认后同步 |
 | `product-kb-query` | 产品知识库查询：按需为 leaf skills 注入知识库上下文 |
@@ -117,8 +156,8 @@ Skill 会先执行不联网的 dry-run，并在真正发送前再次确认目标
 | `tr2-feature-creator` | TR2 Feature 生成 |
 | `tr2-story-creator` | TR2 Story 生成 |
 | `tr2-tech-creator` | TR2 Tech 需求生成 |
-| `cospec-configure` | 交互式配置：设置 project info、模板、默认 workflow 等 |
-| `writing-skills` | 编写/修改/验证 skill 的元 skill |
+| `cospec-configure` | 交互式配置：project info、模板、KB、workflows 管理（默认 / 注册表 / bridge install/uninstall/sync）等 |
+| `writing-skills` | 编写/修改/验证 skill 的元 skill（含 "Authoring Workflow Entries" 章节） |
 
 ## 扩展与接入
 

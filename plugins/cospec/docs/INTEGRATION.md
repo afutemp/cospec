@@ -165,25 +165,61 @@ Skill("tr2-tech-creator")
 
 ### 2.7 新增 `brainstorming` 出口（新增独立工作流）
 
-`brainstorming` 当前提供两个出口：`large-requirement-workflow` 和 `small-requirement-workflow`。当你需要增加其它产品规划相关的工作流时，应该新建一个 workflow entry skill 并在 `brainstorming` 中注册为新的选项，而不是把逻辑塞进 `large-requirement-workflow`。
+> **首选路径：用 `scaffold-custom-workflow` 元 skill 自动生成**（composer 模式）——它会引导：
+> 1. 3 个一次性问询（name / trigger / optional postprocess）
+> 2. 自动发现 13 个内置 leaf skill
+> 3. 分步选（已被选的自动剔除）+ 一次性收集 HARD-GATE
+> 4. 生成失败测试（RED）
+> 5. composer 自动渲染 SKILL.md（用户**不写任何 markdown**）
+> 6. bridge 安装 + 注册到 `workflow.options`
+>
+> composer 强制遵循 writing-skills 的 Iron Law。下面是手工路径，仅在高级用户已经清楚契约、不希望交互式引导时使用。
 
-示例：新增竞品分析工作流
+`brainstorming` 的路由菜单**从 `cospec.config.json` 的 `workflow.options` 动态生成**，不需修改 brainstorming 本身。新增一个工作流入口有标准流程：
 
-1. 新建 workflow entry skill：`skills/product-planning-with-competitor-workflow/SKILL.md`
-2. 在该 skill 内部编排 `product-planning-requirement-clarification`、`competitor-analysis`、`user-journey-design`、`tr1-requirements-spec` 等子 skill
-3. 编辑 `skills/brainstorming/SKILL.md` 的路由表，增加新选项：
+**Vault（源真理）**：`~/.cospec/workflows/<name>-workflow/SKILL.md`
+- 自定义工作流存活于 agent 之外，跨 `codex plugin marketplace upgrade` 不会被覆盖
+- 必须以 `-workflow` 结尾的 kebab-case 命名
+- frontmatter `name` 必须等于目录名
+- 必须包含 `<HARD-GATE>` 块、`Skill 标识` 块、串行 `Skill()` 调用表、红线段
 
-```markdown
-| Workflow | 适用场景 | 产出 |
-|----------|---------|------|
-| `large-requirement-workflow` | 需要共创/客户/竞品研究，或要 TR2 产物 | TR1 + TR2（完整管线） |
-| `product-planning-with-competitor-workflow` | 要做竞品分析 | 带竞品分析的管线 |
-| `small-requirement-workflow` | 范围聚焦、无需研究/竞品 | TR1（精简管线） |
+**Bridge（运行时挂载）**：`<agent-skill-dir>/<name>-workflow` → vault（symlink 或 Windows junction）
+- **绝不复制**——一律走 `<plugin-root>/scripts/workflow-links.mjs install <name> --install-dir "<dir>"`
+- 由运行中的 agent 自决 install 目录；`workflow.install-dirs` 里的显式覆盖优先
+- Windows 用 junction（`fs.symlink(target, dst, 'junction')`），无需管理员或开发者模式
+
+**Registry**：把 `<name>` 追加到 `cospec.config.json` 的 `workflow.options`
+- 写入前校验 `workflow.default` ∈ `workflow.options`
+- 已存在的 `cospec.config.json.bak` 不得覆盖
+- 所有未相关字段必须保留（merge-only-changed-fields）
+
+**示例：新增竞品分析工作流**
+
+```bash
+# 1. 在 vault 中创建 skill 目录与 SKILL.md
+mkdir -p ~/.cospec/workflows/competitor-analysis-workflow
+# (用 scaffold-custom-workflow 引导或手工编写 SKILL.md，遵循 RED-GREEN-REFACTOR)
+
+# 2. 安装 bridge 到当前 agent
+node <plugin-root>/scripts/workflow-links.mjs install competitor-analysis-workflow \
+  --install-dir ~/.agents/skills
+
+# 3. 注册到 workflow.options（cospec-configure 5.3 或手工编辑）
+# workflow.options: [..., "competitor-analysis-workflow"]
+
+# 4. 重启 agent 或开新会话以发现新 skill
 ```
 
-4. 更新 `README.md`、`CLAUDE.md` 的架构图和 Skill 清单
+**手工路径（高级，不推荐）**
 
-**原则**：`brainstorming` 提供选项让用户选择 workflow entry skill，workflow entry skill 编排子 skill。不要把不同 workflow 的阶段硬塞进 `large-requirement-workflow`。
+如果你已经清楚契约、不希望走元 skill 引导：
+
+1. 在 `~/.cospec/workflows/<name>-workflow/SKILL.md` 编写 skill；用同目录 `<name>.test.mjs` 写断言（参照 `large-requirement-workflow.test.mjs`），先观察到 RED 再写 SKILL.md 到 GREEN。
+2. 调用 `scripts/workflow-links.mjs install <name> --install-dir "<agent-skill-dir>"` 创建 bridge。
+3. 用 `cospec-configure` → 菜单 5 (workflows) → 5.3 register，或手工编辑 `cospec.config.json` 把 `<name>` 加进 `workflow.options`。保留 `.bak` 不被覆盖、保留未相关字段。
+4. 更新 `README.md`、`CLAUDE.md`、`docs/INTEGRATION.md` 把新工作流加入架构图与 skill 清单。
+
+**原则**：`brainstorming` 不需要被修改——`workflow.options` 已经是它的真值源。workflow entry skill 编排子 skill；不要把不同 workflow 的阶段硬塞进 `large-requirement-workflow`。
 
 ---
 

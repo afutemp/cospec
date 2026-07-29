@@ -108,6 +108,26 @@ When installed via marketplace, Codex copies the plugin into its plugin cache an
 
 The `using-spec-developer` guide has been moved to `docs/using-spec-developer/` and is no longer auto-discovered or injected; cospec no longer force-loads skill-discipline rules into every session.
 
+## Custom Workflows
+
+Each cospec workflow entry is a skill at the same routing level as the built-ins (`large-requirement-workflow`, `small-requirement-workflow`). You can define your own:
+
+- **Vault (source of truth)**: `~/.cospec/workflows/<name>-workflow/SKILL.md` — agent-agnostic, survives `codex plugin marketplace upgrade` and any symlink reinstall
+- **Bridge (runtime exposure)**: `~/.agents/skills/<name>-workflow` is a symlink (or Windows directory junction) pointing to the vault. Created by `scripts/workflow-links.mjs`, **never by `cp -r` / `rsync` / `xcopy`**.
+- **Registry**: `<plugin-root>/cospec.config.json` includes a `workflow.options` array. `brainstorming` reads it to build its routing menu; each option's explanation comes from its SKILL.md frontmatter `description`.
+
+### Windows note
+
+Node's `fs.symlink(src, dst, 'junction')` creates a Windows directory junction equivalent to `mklink /J` and does **not** require admin or Developer Mode. The bridge helper uses this; manual `ln -s` is not needed.
+
+### Recommended workflow
+
+1. Run `Skill("scaffold-custom-workflow")` (composer mode) — answer 3 questions (name / trigger / optional postprocess), then pick leaf skills from the auto-discovered list of 13 built-in entries. The composer auto-renders the SKILL.md; you do not write any markdown.
+2. Or use `Skill("cospec-configure")` → menu **5. workflows** → **5.1 install** to bridge an existing vault workflow into Codex's `~/.agents/skills/`.
+3. Restart Codex (or open a fresh session) so skill discovery picks up the new entry.
+
+Do not run `ln -s ~/.cospec/workflows/<name>-workflow ~/.agents/skills/<name>-workflow` manually — the helper validates, refuses conflicts, and records the bridge for `cospec-configure` to manage.
+
 ## Environment Variables
 
 See `README.md` for configuration options.

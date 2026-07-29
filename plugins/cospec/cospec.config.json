@@ -1,6 +1,6 @@
 {
   "_comment": "cospec plugin configuration. Run 'cospec-configure' skill to replace any value with your own path, skill name, or credential.",
-  "_version": "1.0.19",
+  "_version": "1.0.21",
   "_updated": "2026-07-21",
   "project": {
     "_comment": "Project metadata. 'product' identifies the product line (e.g., SCC, SCP, DMP).",
@@ -35,7 +35,12 @@
     "tr1-requirements-spec": "tr1-requirements-spec-evaluator"
   },
   "workflow": {
-    "_comment": "Default workflow entry skill used by brainstorming when no more specific workflow is selected.",
-    "default": "large-requirement-workflow"
+    "_comment": "Workflow entry skills. brainstorming reads 'options' to build the routing menu; 'default' is a fallback only and must remain a member of 'options'. Each option's menu explanation comes from its SKILL.md frontmatter description — no per-option label/description fields are stored here. Custom workflow entries are added to 'options' by cospec-configure or scaffold-custom-workflow after they install a vault bridge via scripts/workflow-links.mjs. 'install-dirs' is an optional agent-id → path map used to override the agent's default skill discovery directory when bridging custom workflows.",
+    "default": "large-requirement-workflow",
+    "options": [
+      "large-requirement-workflow",
+      "small-requirement-workflow"
+    ],
+    "install-dirs": {}
   }
 }

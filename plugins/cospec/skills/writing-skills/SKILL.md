@@ -113,6 +113,52 @@ Agent found new rationalization? Add explicit counter. Re-test until bulletproof
 
 **One excellent example beats many mediocre ones.** Choose most relevant language.
 
+## Authoring Workflow Entries
+
+cospec 自定义工作流入口 skill（与 `large-requirement-workflow`、`small-requirement-workflow` 平级）有特殊的工程化约定，**普通 leaf skill 不能直接复用本节的规则**。新工作流不要手写——直接用 `scaffold-custom-workflow` 元 skill 引导生成。
+
+### 工作流入口 vs. 普通 leaf skill
+
+| 项 | 普通 leaf skill | 工作流入口 skill |
+|---|---|---|
+| 命名 | kebab-case 自由 | kebab-case 且必须以 `-workflow` 结尾 |
+| 存放 | `skills/<name>/SKILL.md` 或 `~/.agents/skills/<name>/SKILL.md` | vault: `~/.cospec/workflows/<name>-workflow/SKILL.md`，通过 symlink / Windows junction 暴露到 agent skill 目录 |
+| 注册 | 不需要 | 必须显式追加到 `cospec.config.json` 的 `workflow.options`（由 `cospec-configure` 或 `scaffold-custom-workflow` 完成） |
+| 创建方式 | 编辑 `SKILL.md` 即可 | 必须遵循 Iron Law：先写失败测试 → 再写 SKILL.md → 再 `node scripts/workflow-links.mjs install` |
+
+### 契约
+
+- frontmatter `name` 必须**等于目录名**
+- `description` 字段必须以 "Use when ..." 起头，描述**触发场景**而非功能（CSO 规则）
+- 必须含 `<HARD-GATE>` 段，明确"用户未确认前禁止派发"
+- 必须含 `Skill 标识` 块
+- 步骤表用 `| stepN | \`Skill("<leaf>")\` |` 列出串行调用
+- 必须有"红线"段，禁止并行执行、跳过询问等
+- **绝不复制 vault 内容到 agent skill 目录**——一律走 `scripts/workflow-links.mjs install`
+
+### 跨 agent 一致性
+
+vault 是单一源真理。多个 agent 通过 symlink / Windows junction 共享同一份 SKILL.md：
+
+```
+~/.cospec/workflows/quick-tr1-workflow/SKILL.md   ← vault（永远不动）
+       │
+       ├─→ ~/.agents/skills/quick-tr1-workflow     (Codex)
+       └─→ ~/.claude/skills/quick-tr1-workflow     (Claude Code)
+```
+
+改 vault → 下次 agent 启动立即看到。无需同步命令。
+
+### Iron Law（重申）
+
+```
+NO SKILL WITHOUT A FAILING TEST FIRST
+```
+
+`scaffold-custom-workflow` 强制要求先观察到 RED，再写 SKILL.md。任何"先做出来再说"的请求都必须拒绝。
+
+---
+
 ## Skill Creation Checklist (TDD Adapted)
 
 **RED Phase:**

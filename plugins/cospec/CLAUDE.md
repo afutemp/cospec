@@ -20,24 +20,25 @@ Before you make changes to this repo, you MUST:
 | Skill | Trigger |
 |-------|---------|
 | `using-spec-developer` | Moved to `docs/` (developer reference); no longer a runtime skill or auto-injected |
-| `brainstorming` | ALL product planning work — asks user which workflow, then dispatches |
-| `large-requirement-workflow` | Dispatched by `brainstorming` for the full large-requirement pipeline; offers the optional Demo handoff after TR1 and before TR2 |
-| `small-requirement-workflow` | Dispatched by `brainstorming` for small requirements (clarify + journey + TR1), followed by an optional Demo handoff |
+| `brainstorming` | ALL product planning work — reads `workflow.options` from config, builds a dynamic menu from each entry's frontmatter description, asks user which workflow, then dispatches |
+| `large-requirement-workflow` | Bundled default workflow entry for the full large-requirement pipeline; offers the optional Demo handoff after TR1 and before TR2 |
+| `small-requirement-workflow` | Bundled default workflow entry for small requirements (clarify + journey + TR1), followed by an optional Demo handoff |
+| `<custom>-workflow` | User-defined workflow entry registered in `workflow.options`. Source lives in `~/.cospec/workflows/<name>-workflow/`, exposed to the running agent via symlink / Windows junction created by `scripts/workflow-links.mjs`. |
+| `scaffold-custom-workflow` | Meta-skill: composer mode — picks from 13 built-in leaf skills by category, auto-renders SKILL.md (user writes no markdown), then bridges + registers via the shared helper |
 | `generate-demo` | Direct invocation, explicit opt-in after large-requirement TR1, or opt-in after a small-requirement workflow; sends only user-confirmed Markdown |
 | `sync-to-ipd` | Direct invocation for previewed, explicitly confirmed synchronization of large-requirement TR1/TR2 artifacts through its bundled IPD provider |
 
 ### Pipeline
 
-`brainstorming` 是所有产品规划工作的唯一入口，询问用户选择 workflow（大/小需求），确认后路由到对应的 workflow entry skill。Workflow entry skill 在主会话中直接串行调用各 leaf skill，用户交互 inline。
+`brainstorming` 是所有产品规划工作的唯一入口。从 `cospec.config.json` 读取 `workflow.options`，对每个条目读其 SKILL.md frontmatter `description` 生成动态菜单，询问用户选择后路由到对应的 workflow entry skill。Workflow entry skill 在主会话中直接串行调用各 leaf skill，用户交互 inline。
 
 ```
-用户意图
-    │
-    ▼
-brainstorming（路由器：询问用户选择 → 确认 → 分发）
-    │
-    ├─ 大需求 ──→ 澄清／研究／旅程／TR1 ──→ 可选 generate-demo ──→ TR2
-    └─ 小需求 ──→ 澄清／旅程／TR1 ──→ 可选 generate-demo
+                            ┌─ large-requirement-workflow    （bundled）
+                            │    └─ 澄清／研究／旅程／TR1 ──→ 可选 generate-demo ──→ TR2
+用户意图 ──→ brainstorming ──┼─ small-requirement-workflow    （bundled）
+                            │    └─ 澄清／旅程／TR1 ──→ 可选 generate-demo
+                            └─ <custom>-workflow              （vault + bridge）
+                                 └─ 用户自定义的串行步骤
 ```
 
 `brainstorming` 将路由决定权完全交由用户：
@@ -46,6 +47,30 @@ brainstorming（路由器：询问用户选择 → 确认 → 分发）
 |---|---|
 | `large-requirement-workflow` | 需要共创/客户/竞品研究，或要 TR2 产物（EPIC/Feature/Story/Tech） |
 | `small-requirement-workflow` | 范围聚焦、无需研究/竞品、到 TR1 即止 |
+| `<custom>-workflow` | 团队或个人定义的专属管线（通过 `cospec-configure` 或 `scaffold-custom-workflow` 注册） |
+
+### 自定义工作流架构
+
+新增自定义工作流的标准流程（composer 模式）：
+
+```
+scaffold-custom-workflow（用户调用）
+       ↓  3 个一次性问询：name / trigger / optional postprocess
+       ↓  自动发现 plugins/cospec/skills/ 下 13 个内置 leaf skill
+       ↓  分步选（每步问"选哪个？"，0 结束，已选剔除）
+       ↓  一次性收集 HARD-GATE
+       ↓  生成失败测试（RED）
+       ↓  composer 自动渲染 SKILL.md（用户不写 markdown）
+       ↓  调用 scripts/workflow-links.mjs install → 在 agent skill 目录创建 symlink / Windows junction
+       ↓  追加到 cospec.config.json 的 workflow.options
+       ↓  提示用户重启 agent 或开新会话
+```
+
+**vault（源真理）**：`~/.cospec/workflows/<name>-workflow/SKILL.md` —— agent 无关、跨 `codex plugin marketplace upgrade` 存活。
+
+**bridge（运行时挂载）**：`<agent-skill-dir>/<name>-workflow` → vault，由运行中的 agent 自决 install 目录；Windows 用 junction（`fs.symlink(target, dst, 'junction')`），无需管理员。
+
+**绝不复制**——所有 bridge 操作走 `scripts/workflow-links.mjs`，禁止 `cp -r` / `rsync` / `xcopy` 到 agent skill 目录。
 
 ### 管线阶段明细
 
@@ -82,7 +107,8 @@ brainstorming（路由器：询问用户选择 → 确认 → 分发）
 | `tr2-feature-creator` | TR2 Feature 生成 |
 | `tr2-story-creator` | TR2 Story 生成 |
 | `tr2-tech-creator` | TR2 Tech 需求生成 |
-| `cospec-configure` | 交互式配置：设置 project info、模板、默认 workflow 等 |
+| `cospec-configure` | 交互式配置：设置 project info、模板、默认 workflow、注册表、bridge install/uninstall/sync 等 |
+| `scaffold-custom-workflow` | 元 skill（composer 模式）：从内置 13 个 leaf skill 多选组合，自动渲染 SKILL.md（用户不写 markdown），再 bridge 安装 + registry |
 | `writing-skills` | 编写/修改/验证 skill 的元 skill |
 
 ## Skill Authoring Rules
@@ -92,6 +118,7 @@ brainstorming（路由器：询问用户选择 → 确认 → 分发）
 3. **Skill 标识** — Every skill must have a `Skill 标识` block after the H1 title.
 4. **Standards references** — Skills that involve document generation must reference applicable templates in `templates/`.
 5. **No platform prefixes** — Skills are referenced by name only.
+6. **Custom workflow entries** — Vault at `~/.cospec/workflows/<name>-workflow/`; bridge via `scripts/workflow-links.mjs`; registered in `workflow.options`. Never copy into agent skill dirs.
 
 ## General
 

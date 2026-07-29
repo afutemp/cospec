@@ -76,10 +76,24 @@ Replace or disable individual quality gate evaluator skills.
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `default` | string | `"large-requirement-workflow"` | Default workflow entry skill used by `brainstorming` when it cannot determine a more specific workflow. |
+| `default` | string | `"large-requirement-workflow"` | Default workflow entry skill. Used by `brainstorming` only as a fallback hint — it must always be a member of `options`. Brainstorming still requires explicit user selection before dispatch. |
+| `options` | string[] (ordered, unique) | `["large-requirement-workflow", "small-requirement-workflow"]` | Ordered list of every workflow entry skill name that should appear in `brainstorming`'s routing menu. Each entry's menu explanation comes from its SKILL.md frontmatter `description` field — no per-option label/description fields are stored here. Custom workflows are appended after their vault bridge is installed via `scripts/workflow-links.mjs`. |
+| `install-dirs` | object (string → string) | `{}` | Optional `agent-id → 路径` override map. Used by `cospec-configure` and `scaffold-custom-workflow` when installing a bridge to override the agent's default skill discovery directory (e.g. `{ "codex": "~/.agents/skills", "claude-code": "~/.claude/skills" }`). |
 
-Workflow topology itself is defined in the workflow entry skill prompts (`large-requirement-workflow`, `small-requirement-workflow`, etc.), not in config.
+**Validation:**
+- `options` must be a non-empty array of unique skill names.
+- Each name must be kebab-case and end with `-workflow`.
+- `default` must be a member of `options`.
+- `install-dirs` values must be `~`, `~/...`, or absolute paths; `~user` syntax is rejected.
+- Unknown fields at the same level are preserved on write.
+
+Workflow topology itself is defined in the workflow entry skill prompts (`large-requirement-workflow`, `small-requirement-workflow`, custom `<name>-workflow`, etc.), not in config.
 
 ## Extension Principle
 
-`cospec.config.json` is the **only** supported extension mechanism. Core workflow skills (`brainstorming`, `large-requirement-workflow`, `small-requirement-workflow`) enforce their own SOP and cannot be overridden by other plugins. Only the leaf extension points declared in this config (templates, rules, evaluators, kb, env, workflow default) are replaceable.
+`cospec.config.json` is the **only** supported extension mechanism.
+
+- **Bundled workflow topology is immutable**: `brainstorming`, `large-requirement-workflow`, `small-requirement-workflow`, `cospec-preflight` enforce their own SOP and cannot be overridden by config.
+- **Leaf extension points** (replaceable): `templates`, `rules`, `evaluators`, `kb`, `env`.
+- **Workflow entry registry** (additive): `workflow.options` may include **additional** workflow entries that live in `~/.cospec/workflows/<name>-workflow/`, alongside the two bundled entries. Each such entry is a real skill that `brainstorming` will load and dispatch through.
+- **Workflow topology** (steps, ordering, gates, red lines) stays inside each workflow entry SKILL.md, not in config.
