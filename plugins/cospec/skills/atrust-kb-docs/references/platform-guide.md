@@ -23,7 +23,10 @@ agent-browser --session $s snapshot -i --json
 下载单个附件：
 
 ```powershell
-agent-browser --session $s download '@eN' 'D:\absolute\downloads\file.ext'
+$href = agent-browser --session $s get attr '@eN' href --json
+# 从 href 的 contentid 参数提取 ID，然后：
+& "$SkillDir\scripts\download-authenticated-attachment.ps1" `
+  -ContentId '<ID>' -FileName '<原始文件名>' -OutputDir 'D:\absolute\downloads'
 ```
 
 不得把示例引用 `@eN` 写死到自动化脚本中。
@@ -84,7 +87,7 @@ agent-browser --session $s download '@eN' 'D:\absolute\downloads\file.ext'
 - PDF、Office 或图片预览器的工具栏按钮
 - 点击后产生下载事件的无扩展名链接
 
-先读取可见文件名、扩展名和大小。若下载 URL 是短期签名地址，只在当前登录会话中通过页面触发，不复制为长期链接。
+先读取可见文件名、扩展名和大小。附件真实地址常为 `/admin/DemandViewApi/getDownFile?contentid=<ID>`。使用页面内 `fetch` 自动携带当前会话认证，并由浏览器生成下载；不要读取或拼接 Cookie 请求头。若 Chrome 忽略 CDP 下载目录，脚本会在用户 Downloads 中识别本次新文件并移动到目标目录。
 
 页面中出现“文档说明 + 文档附件 + 更新时间”的表格时，把每一行视为一个候选文档单元。先按“文档说明”判断主题，再以“文档附件”的真实文件名作为下载目标。用户询问内容时，至少下载并读取一个直接相关附件；问题跨多个主题时读取覆盖各主题的最小附件集合。
 

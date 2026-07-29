@@ -7,7 +7,7 @@ description: 使用 agent-browser 通用查询、定位、下载并深度读取�
 
 把站点视为需要 aTrust 网络环境和登录态的动态 Wiki。首选 `agent-browser` 启动独立、可见、持久化的 Chrome 会话。不要读取或导出 Cookie、令牌、密码、Local Storage 或其他认证材料。
 
-执行前读取 [references/platform-guide.md](references/platform-guide.md)。环境初始化使用 [scripts/setup-agent-browser.ps1](scripts/setup-agent-browser.ps1)。
+执行前读取 [references/platform-guide.md](references/platform-guide.md)。环境初始化使用 [scripts/setup-agent-browser.ps1](scripts/setup-agent-browser.ps1)，认证附件下载使用 [scripts/download-authenticated-attachment.ps1](scripts/download-authenticated-attachment.ps1)。
 
 ## 强制执行链
 
@@ -71,7 +71,7 @@ agent-browser --session atrust-kb snapshot -i --json
 
 1. 在详情页或文档表格中识别文件名链接、“附件”“下载”“导出”或预览器工具栏。
 2. 下载前确定范围：用户点名的文件、当前文档全部附件、搜索结果中的全部文档，三者不要混淆。
-3. 用最新 snapshot 中唯一的文件链接引用执行 `agent-browser --session atrust-kb download @eN <absolute-path>`。引用不唯一时按精确文件名定位；页面变化后重新 snapshot。
+3. 用最新 snapshot 中唯一的文件链接读取 `href`。平台附件链接通常为 `admin/DemandViewApi/getDownFile?contentid=<ID>`；提取 `contentid` 后运行 `scripts/download-authenticated-attachment.ps1`。该脚本在已登录页面上下文中执行带 `credentials: include` 的请求，不导出 Cookie 或请求头。
 4. 保存到用户指定目录；未指定时保存到当前工作区下新建的 `downloads/atrust-kb/`，保留服务器文件名。重名时添加文档标题或递增后缀，不覆盖已有文件。
 5. 每个下载后验证文件存在、大小大于 0、扩展名或 MIME 类型合理；HTML 登录页、错误页或 JSON 错误响应不得报告为成功文档。
 6. 批量下载时逐项记录成功、跳过、失败及原因。不要无限重试；认证失效时停止并请求用户重新登录。
@@ -119,3 +119,4 @@ agent-browser --session atrust-kb snapshot -i --json
 - 不泄露或持久化认证信息，不把内部文档上传到第三方服务。
 - 不点击编辑、发布、删除、评论、共享、权限设置等写操作。
 - 下载可能含敏感信息的资料时，仅保存到用户指定或当前工作区目录，不转发到其他位置。
+- 不打印、复制、保存或提交 Cookie、Authorization、用户令牌、完整 cURL 认证命令或 HAR。用户粘贴认证信息时提醒其注销并重新登录使令牌失效。
