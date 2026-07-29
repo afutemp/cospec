@@ -1,0 +1,4 @@
+interface:
+  display_name: "aTrust 知识库文档"
+  short_description: "自动安装 agent-browser，查询并深读知识库附件"
+  default_prompt: "使用 $atrust-kb-docs 查询指定主题，收窄正确文档后下载并读取附件，再给出有证据的总结。"
